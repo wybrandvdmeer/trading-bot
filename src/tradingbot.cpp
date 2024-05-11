@@ -7,7 +7,9 @@
 #include "position.h"
 #include "yahoo_api.h"
 #include "db_api.h"
+#include "indicators.h"
 #include "logger.h"
+#include "alpaca_api.h"
 #include "tradingbot.h"
 
 using namespace std;
@@ -16,94 +18,161 @@ using namespace std;
 Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na bijv de 1e pull back.
 Trendfollowing: Identificeer op dag basis een trend en stap dan in aan het begin vd trend op basis
 van bijv de macd.
+
+Top-gainers: queryen op 1m.  later mischien op kwartier.
+macd boven 0
+macd boven signal
+Dan buy in de morgen.
+Wanneer cross macd/signal -> sell
+
+selectie uit top 5 topGainers.
+
+beurs nse begint om 15.30
 */
 
 tradingbot::tradingbot(std::string ticker) {
 	tradingbot::ticker = ticker;
-	tradingbot::smaSlowRange = 50;
-	tradingbot::smaFastRange = 20;
+	tradingbot::sma_slow_range = 50;
+	tradingbot::sma_fast_range = 20;
+
+	tradingbot::sma_200 = 0;
 }
 
+/*
+macd scalping strategy nog te programmeren:
+1> top gainers
+2> visualiseren candles
+3> risico analyze 
+*/
+
+
 void tradingbot::trade(int offset) {
+	if(sma_200 == 0) {
+		sma_200 = calc_sma_200();
+	}
+
 	int noOfHistory = offset + 200 + 1; 
-	std::vector<candle*> * candles = yahoo.stockPrices(ticker, "1d", std::to_string(noOfHistory) + "d");
+	std::vector<candle*> * candles = yahoo.stockPrices(ticker, "1m", "2d");
+	if(candles == NULL) {
+		log.log("No candles received");
+		return;
+	}
+
+	log_quality_candles(candles);
 
 	log.log("\nEvaluating %s", ticker.c_str());
 
-	float sma200_0 = calculateSma(200, candles, 0 + offset);
-	float smaSlow_0 = calculateSma(smaSlowRange, candles, 0 + offset);
-	float smaFast_0 = calculateSma(smaFastRange, candles, 0 + offset);
+	macd * m = ind.calculate_macd(candles);
 
-	float ema12_0 = calculateEma(12, candles, 0 + offset);
-	float ema26_0 = calculateEma(26, candles, 0 + offset);
-	float macd_0 = ema12_0 - ema26_0;
+	candle * current = get_valid_candle(candles, 0 + offset);
+	candle * previous = get_valid_candle(candles, 1 + offset);
 
-	log.log("EMA12_0: %f", ema12_0);
-	log.log("EMA26_0: %f", ema26_0);
-	log.log("macd_0: %f", macd_0);
+	float open_0 = current->open;
+	float close_0 = current->close;
+	float close_1 = previous->close;
 
-	float smaSlow_1 = calculateSma(smaSlowRange, candles, 1 + offset);
-	float smaFast_1 = calculateSma(smaFastRange, candles, 1 + offset);
+	/* We are only trading if stock is below 20 dollar. 
+	*/
+	if(close_0 > 20) {
+		log.log("Stock price of (%s) is above 20 dollar", ticker.c_str());
+		exit(0);
+	}
 
-	float ema12_1 = calculateEma(12, candles, 1 + offset);
-	float ema26_1 = calculateEma(26, candles, 1 + offset);
-	float macd_1 = ema12_1 - ema26_1;
-
-	log.log("EMA12_1: %f", ema12_1);
-	log.log("EMA26_1: %f", ema26_1);
-	log.log("macd_1: %f", macd_1);
-
-	float open_0 = candles->at(candles->size() - 1 - offset)->open;
-	float close_0 = candles->at(candles->size() - 1 - offset)->close;
-	float close_1 = candles->at(candles->size() - 2 - offset)->close;
-
-	log.log("Last open/close: (%f,%f)", open_0, close_0);
+	log.log("open/close: (%f,%f), sma200: %f, macd: %f, signal: %f, ema(20): %f", 
+		open_0, 
+		close_0,
+		sma_200,
+		m->get_macd(0),
+		m->get_signal(0),
+		ind.calculate_ema(20, candles, 0));
 	
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
+		bool bSell = false;
+		if(m->get_macd(0) <= m->get_signal(0)) {
+			p->stop_loss_activated = 0;
+			log.log("sell: macd (%f) is below signal (%f)." ,
+				m->get_macd(0) , m->get_signal(0));
+			bSell = true;
+		} else
 		if(close_0 >= p->sell_price) {
 			p->stop_loss_activated = 0;
-			sell(p);
-		}
-
+			log.log("sell: current price (%f) is above selling price (%f)." ,
+				close_0 , p->sell_price);
+			bSell = true;
+		} else
 		if(close_0 <= p->loss_limit_price) {
 			p->stop_loss_activated = 1;
+			log.log("sell: current price (%f) is below stop-loss price (%f)." ,
+				close_0 , p->loss_limit_price);
+			bSell = true;
+		}
+
+		if(bSell) {
 			sell(p);
 		}
+
+		finish(ticker, candles, m);
 		return;
 	}
 
-	if(close_0 <= sma200_0) {
-		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma200_0);
-		return;
+	if(close_0 <= sma_200) {
+		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200);
+	} else
+	if(m->get_macd(0) <= 0) {
+		log.log("no trade: macd(%f) is smaller then 0.", m->get_macd(0));
+	} else
+	if(m->get_macd(0) <= m->get_signal(0)) {
+		log.log("no trade: macd(%f) is smaller then signal (%f).", m->get_macd(0), m->get_signal(0));
+	} else {
+		buy(ticker, close_0);
 	}
 
-	if(macd_0 < 0 && macd_1 < 0) {
-		log.log("no trade: macd (%f,%f) is below zero.", macd_0, macd_1);
-		return;
-	}
-
-	if(macd_0 < macd_1) {
-		log.log("no trade: macd (%f,%f) has a negative trend.", macd_0, macd_1);
-		return;
-	}
-
-	if(close_1 >= close_0) {
-		log.log("no trade: close_0 is smaller then close_1 (%f,%f).", close_0, close_1);
-		return;
-	}
-
-	buy(ticker, close_0, close_1);
+	finish(ticker, candles, m);
 }
 
-void tradingbot::buy(std::string ticker, float stock_price, float loss_limit_price) {
+void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd * m) {
+	db.insert_candles(ticker, candles);
+
+	for(auto c : *candles)  {
+		delete c;
+	}
+
+	delete candles;
+
+	delete m;
+}
+
+candle * tradingbot::get_valid_candle(std::vector<candle*> * candles, int position) {
+	candle *c=NULL;
+	int idx = candles->size() - 1 - position;
+	while(idx >= 0) {
+		c = candles->at(idx);
+		if(c->open > 0 && c->close > 0) {
+			return c;
+		}
+		idx--;
+	}
+	return NULL;
+}
+
+void tradingbot::buy(std::string ticker, float stock_price) {
+
 	position p;
 	p.ticker = ticker;
 	p.buy = time(0);
-	p.no_of_stocks = 1000 / ((int)stock_price);
+	p.no_of_stocks = 200 / ((int)stock_price);
 	p.stock_price = stock_price;
-	p.sell_price = stock_price + 10;
-	p.loss_limit_price = loss_limit_price;
+
+	if(p.no_of_stocks <= 0) {
+		log.log("No-of-stocks calculated is 0.");
+		return;
+	}
+
+	// inzet: 200, risk: 5% -> 20 euro risico.  
+	float risk_per_stock = ((float)10)/p.no_of_stocks;
+	p.loss_limit_price = stock_price - risk_per_stock;
+	p.sell_price = stock_price + risk_per_stock * 4;
 	
 	log.log("Buy (%s), price: %f, number: %d, sell_price: %f, loss-limit: %f", 
 		ticker.c_str(), 
@@ -112,7 +181,20 @@ void tradingbot::buy(std::string ticker, float stock_price, float loss_limit_pri
 		p.sell_price,
 		p.loss_limit_price);
 
-	db.open_position(p);
+	if(alpaca.open_position(p)) {
+		db.open_position(p);
+	}
+}
+
+float tradingbot::calc_sma_200() {
+	std::vector<candle*> * candles = yahoo.stockPrices(ticker, "1d", "201d");
+	float sma_200 = ind.calculate_sma(200, candles, 0);
+	for(auto c : *candles) {
+		delete c;
+	}
+	delete candles;
+	log.log("Calculated sma-200: %f", sma_200);
+	return sma_200;
 }
 
 void tradingbot::sell(position *p) {
@@ -124,55 +206,20 @@ void tradingbot::sell(position *p) {
 		p->loss_limit_price,
 		p->stop_loss_activated);
 
-	db.close_position(*p);
-}
-
-float tradingbot::calculateEma(int noOfDays, std::vector<candle*> * candles, int offset) {
-	int idx=0;
-	float ema=calculateSma(noOfDays, candles, offset);
-
-	float alpha = 2/(noOfDays + 1);
-
-	for(vector<candle*>::reverse_iterator it = candles->rbegin(); it != candles->rend(); ++it) {
-		if(idx >= noOfDays + offset) {
-			break;
-		}
-		
-		candle * c = *it;
-
-		ema = (c->close - ema) * alpha + ema;
+	if(alpaca.close_position(*p)) {
+		db.close_position(*p);
 	}
-
-	return ema;
 }
-
-float tradingbot::calculateSma(int noOfDays, std::vector<candle*> * candles, int offset) {
-
-	int idx=0;
-	float sma=0;
-
-	for(vector<candle*>::reverse_iterator it = candles->rbegin(); it != candles->rend(); ++it) {
-		if(idx >= noOfDays + offset) {
-			break;
+	
+void tradingbot::log_quality_candles(std::vector<candle*> *candles) {
+	int non_valid_candles=0;
+	for(auto c : *candles) {
+		if(c->open == 0 || c->close == 0) {
+			non_valid_candles++;
 		}
-
-		candle * c = *it;
-
-		if(c->close == 0) {
-			continue;
-		}
-
-		if(idx >= offset) {
-			sma += c->close;
-		}
-
-		idx++;
 	}
-
-	return sma /= noOfDays;
+	log.log("noOfCandles: %ld, noOfNonValidCandles: %d", candles->size() , non_valid_candles);
 }
-
-
 
 void tradingbot::configure() {
 	db.createSchema();

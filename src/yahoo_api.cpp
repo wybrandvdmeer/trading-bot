@@ -63,6 +63,10 @@ std::vector<candle*>* yahoo_api::stockPrices(
 
 	std::string response = dl.request(url);
 
+	if(response.length() == 0) {
+		return NULL;
+	}
+
 	auto json = nlohmann::json::parse(response);
 
 	std::vector<candle*> * candles = new std::vector<candle*>();

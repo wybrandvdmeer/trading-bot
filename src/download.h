@@ -6,6 +6,7 @@
 class download {
 public:
 	std::string request(std::string url);
+	std::string request_bin_data(std::string url);
 	download();
 private:
 	ulong cookieDate;

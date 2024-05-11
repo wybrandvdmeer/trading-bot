@@ -122,6 +122,10 @@ int trace(CURL *handle, curl_infotype type,
   return 0;
 }
 
+std::string download::request_bin_data(std::string url) {
+	return rq(url, false);
+}
+
 std::string download::request(std::string url) {
 	url = url + "&crumb=" + getCrumb();
 	return rq(url, false);
@@ -131,7 +135,7 @@ std::string download::rq(std::string url, bool returnCookies) {
 
     CURL* curl;
     CURLcode res;
-    
+
 	std::string userAgent = "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36";
 
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -147,26 +151,26 @@ std::string download::rq(std::string url, bool returnCookies) {
     		ck.append(*download::cookie);
 
 			headers = curl_slist_append(headers, ck.c_str()); 
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 		}
 
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-	    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getBody);
-   		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
-   		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, getCookieHeader);
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getBody);
+ 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
+		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, getCookieHeader);
    		curl_easy_setopt(curl, CURLOPT_HEADERDATA, &cookies);
+		curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
 
 	   	struct data config;
   		config.trace_ascii = 1; /* enable ascii tracing */ 
 
 		curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, trace);
-	    // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+	    //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 	    curl_easy_setopt(curl, CURLOPT_DEBUGDATA, &config);
 
         res = curl_easy_perform(curl);
         if (res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n",
-                curl_easy_strerror(res));
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 		}
 
         curl_easy_cleanup(curl);

@@ -1,14 +1,48 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+#include <vector>
 #include <sqlite3.h>
 
 #include "position.h"
+#include "candle.h"
 #include "db_api.h"
 
 #define DB_FILE "/tmp/tb.db"
 
 using namespace std;
+	
+void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles) {	
+	if(candles->size() >= 3) {
+		insert_candle(ticker, candles->at(candles->size() - 1 - 2));
+	}
+	if(candles->size() >= 2) {
+		insert_candle(ticker, candles->at(candles->size() - 1 - 1));
+	}
+	if(candles->size() >= 1) {
+		insert_candle(ticker, candles->at(candles->size() - 1 - 0));
+	}
+}
+
+void db_api::insert_candle(std::string ticker, candle *c) {	
+
+	if(has_candle(ticker, c)) {
+		return;
+	}
+
+	open();
+	char sql[1000];
+	sprintf(sql, "INSERT INTO candles VALUES('%s', %ld, %f, %f, %f, %f, %ld)", 
+		ticker.c_str(), 
+		c->time, 
+		c->open,
+		c->close,
+		c->low,
+		c->high,
+		c->volume);
+		 
+	execDml(sql);
+}
 
 void db_api::close_position(position p) {
 	open();
@@ -30,7 +64,26 @@ void db_api::open_position(position p) {
 		p.stock_price, 
 		p.sell_price,
 		p.loss_limit_price);
+
 	execDml(sql);
+}
+
+bool db_api::has_candle(std::string ticker, candle *c) {
+
+	open();
+	char sql[1000];
+	sprintf(sql, "SELECT COUNT(*) FROM candles WHERE ticker = '%s' AND time = %ld", 
+		ticker.c_str(), c->time);
+	sqlite3_stmt * s = prepare(std::string(sql));
+
+	if(sqlite3_data_count(s) == 0) {
+		return false;
+	}
+
+	int count = selectInt(s, 0);
+
+	close(s);
+	return count != 0 ? true : false;
 }
 
 position * db_api::get_open_position(std::string ticker) {
@@ -97,6 +150,10 @@ void db_api::createSchema() {
 	execDml("CREATE TABLE positions (ticker VARCHAR(10), buy_time INTEGER , sell_time INTEGER, \
 		no_of_stocks INTEGER, stock_price REAL, sell_price REAL, loss_limit_price REAL, \
 		stop_loss_activated INTEGER)");
+
+	open();
+	execDml("CREATE TABLE candles (ticker VARCHAR(10), time INTEGER, open REAL, close REAL, low REAL, \
+			 high REAL, volume INTEGER)");
 }
 
 sqlite3_stmt * db_api::prepare(std::string sql) {
