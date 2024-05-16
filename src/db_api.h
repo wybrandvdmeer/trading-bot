@@ -7,17 +7,20 @@
 #include "candle.h"
 #include "macd.h"
 #include "position.h"
+#include "logger.h"
 
 #ifndef DB_API_H
 #define DB_API_H
 
 class db_api {
 public:
+	db_api();
 	void createSchema();
 	position * get_open_position(std::string ticker);
 	void open_position(position p);
 	void close_position(position p);
 	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m);
+	bool debug;
 private:
 	sqlite3 * db;
 	void open();
@@ -29,6 +32,7 @@ private:
 	sqlite3_stmt * prepare(std::string sql);
 	bool has_candle(std::string ticker, candle * c);
 	void insert_candle(std::string ticker, candle *c, float macd, float signal);
+	logger log;
 };
 
 #endif

@@ -12,6 +12,10 @@
 #define DB_FILE "/tmp/tb.db"
 
 using namespace std;
+
+db_api::db_api() {
+	debug = false;
+}
 	
 void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m) {	
 	int idx=0;
@@ -21,7 +25,6 @@ void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, 
 }
 
 void db_api::insert_candle(std::string ticker, candle *c, float macd, float signal) {	
-
 	if(has_candle(ticker, c)) {
 		return;
 	}
@@ -131,6 +134,10 @@ void db_api::close(sqlite3_stmt * statement) {
 }
 
 void db_api::execDml(std::string sql) {
+	if(debug) {
+		log.log("%s", sql.c_str());
+	}
+
 	sqlite3_stmt* stmt;
 
     if(sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL) != SQLITE_OK) {

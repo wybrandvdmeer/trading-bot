@@ -48,6 +48,7 @@ void tradingbot::trade(int offset, int top_gainers_idx) {
 
 	if(debug) {
 		yahoo.debug = true;
+		db.debug = true;
 	}
 
 	while(true) {
