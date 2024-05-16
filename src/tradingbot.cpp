@@ -222,12 +222,12 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 		}
 	}
 
-	float quality = non_valid_candles/candles->size();
+	float quality = (candles->size() - non_valid_candles)/candles->size();
 
 	log.log("quality: %f%, noOfCandles: %ld, noOfNonValidCandles: %f", 
 		quality, candles->size() , non_valid_candles);
 	
-	return ((float) non_valid_candles / candles->size()) < 0.9;
+	return quality >= 0.9;
 }
 
 void tradingbot::configure() {
