@@ -13,7 +13,6 @@ class tradingbot {
 public:
 	tradingbot();
 	std::string ticker;
-	int sma_slow_range, sma_fast_range;
 	void trade(int offset, int top_gainers_idx);
 	float calc_sma_200();
 	void configure();

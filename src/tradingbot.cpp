@@ -31,8 +31,6 @@ beurs nse begint om 15.30
 */
 
 tradingbot::tradingbot() {
-	tradingbot::sma_slow_range = 50;
-	tradingbot::sma_fast_range = 20;
 	tradingbot::sma_200 = 0;
 	tradingbot::force = false;
 	tradingbot::debug = false;
