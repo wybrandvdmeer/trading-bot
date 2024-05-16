@@ -78,10 +78,6 @@ void tradingbot::trade(int offset, int top_gainers_idx) {
 
 
 void tradingbot::trade(int offset) {
-	if(sma_200 == 0) {
-		sma_200 = calc_sma_200();
-	}
-
 	int noOfHistory = offset + 200 + 1; 
 	std::vector<candle*> * candles = yahoo.stockPrices(ticker, "1m", "2d");
 	if(candles == NULL) {
@@ -96,6 +92,7 @@ void tradingbot::trade(int offset) {
 		return;
 	}
 
+	sma_200 = calc_sma_200(candles);
 	macd * m = ind.calculate_macd(candles);
 
 	candle * current = get_valid_candle(candles, 0 + offset);
@@ -220,13 +217,8 @@ void tradingbot::buy(std::string ticker, float stock_price) {
 	}
 }
 
-float tradingbot::calc_sma_200() {
-	std::vector<candle*> * candles = yahoo.stockPrices(ticker, "1d", "201d");
+float tradingbot::calc_sma_200(std::vector<candle*> * candles) {
 	float sma_200 = ind.calculate_sma(200, candles, 0);
-	for(auto c : *candles) {
-		delete c;
-	}
-	delete candles;
 	log.log("Calculated sma-200: %f", sma_200);
 	return sma_200;
 }

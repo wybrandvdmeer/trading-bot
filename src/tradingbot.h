@@ -14,7 +14,6 @@ public:
 	tradingbot();
 	std::string ticker;
 	void trade(int offset, int top_gainers_idx);
-	float calc_sma_200();
 	void configure();
 	bool force, debug;
 private:
@@ -32,6 +31,7 @@ private:
 	candle * get_valid_candle(std::vector<candle*> * candles, int position);
 	bool get_quality_candles(std::vector<candle*> *candles);
 	void finish(std::string ticker, std::vector<candle*> *candles, macd *m);
+	float calc_sma_200(std::vector<candle*> * candles);
 };
 
 #endif

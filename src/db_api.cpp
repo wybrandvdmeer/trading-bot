@@ -94,6 +94,7 @@ position * db_api::get_open_position(std::string ticker) {
 	sqlite3_stmt * s = prepare(std::string(sql));
 
 	if(sqlite3_data_count(s) == 0) {
+		close(s);
 		return NULL;
 	}
 
