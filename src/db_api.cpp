@@ -18,9 +18,12 @@ db_api::db_api() {
 }
 	
 void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m) {	
+
 	int idx=0;
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end(); it++, idx++) {
-		insert_candle(ticker, *it, m->get_macd(idx), m->get_signal(idx));
+		insert_candle(ticker, *it, 
+			m->get_macd(candles->size() - 1 - idx), 
+			m->get_signal(candles->size() - 1 - idx));
 	}
 }
 
