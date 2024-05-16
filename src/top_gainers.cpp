@@ -9,7 +9,7 @@
 using namespace std;
 
 std::vector<std::string> * top_gainers::get() {
-	std::string response = dl.request_bin_data("https://finance.yahoo.com/gainers?count=5&offset=0");
+	std::string response = dl.request_bin_data("https://finance.yahoo.com/gainers?count=100&offset=0");
 	vector<std::string> words = split(response);
 
 	vector<std::string> * top_gainers = new vector<std::string>();
