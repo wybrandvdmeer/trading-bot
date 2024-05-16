@@ -7,24 +7,25 @@
 #include "position.h"
 #include "candle.h"
 #include "db_api.h"
+#include "macd.h"
 
 #define DB_FILE "/tmp/tb.db"
 
 using namespace std;
 	
-void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles) {	
+void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m) {	
 	if(candles->size() >= 3) {
-		insert_candle(ticker, candles->at(candles->size() - 1 - 2));
+		insert_candle(ticker, candles->at(candles->size() - 1 - 2), m->get_macd(2), m->get_signal(2));
 	}
 	if(candles->size() >= 2) {
-		insert_candle(ticker, candles->at(candles->size() - 1 - 1));
+		insert_candle(ticker, candles->at(candles->size() - 1 - 1), m->get_macd(1), m->get_signal(1));
 	}
 	if(candles->size() >= 1) {
-		insert_candle(ticker, candles->at(candles->size() - 1 - 0));
+		insert_candle(ticker, candles->at(candles->size() - 1 - 0), m->get_macd(0), m->get_signal(0));
 	}
 }
 
-void db_api::insert_candle(std::string ticker, candle *c) {	
+void db_api::insert_candle(std::string ticker, candle *c, float macd, float signal) {	
 
 	if(has_candle(ticker, c)) {
 		return;
@@ -32,14 +33,16 @@ void db_api::insert_candle(std::string ticker, candle *c) {
 
 	open();
 	char sql[1000];
-	sprintf(sql, "INSERT INTO candles VALUES('%s', %ld, %f, %f, %f, %f, %ld)", 
+	sprintf(sql, "INSERT INTO candles VALUES('%s', %ld, %f, %f, %f, %f, %ld, %f, %f)", 
 		ticker.c_str(), 
 		c->time, 
 		c->open,
 		c->close,
 		c->low,
 		c->high,
-		c->volume);
+		c->volume, 
+		macd,
+		signal);
 		 
 	execDml(sql);
 }
@@ -153,7 +156,7 @@ void db_api::createSchema() {
 
 	open();
 	execDml("CREATE TABLE candles (ticker VARCHAR(10), time INTEGER, open REAL, close REAL, low REAL, \
-			 high REAL, volume INTEGER)");
+			 high REAL, volume INTEGER, macd REAL, signal REAL)");
 }
 
 sqlite3_stmt * db_api::prepare(std::string sql) {

@@ -132,7 +132,7 @@ void tradingbot::trade(int offset) {
 }
 
 void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd * m) {
-	db.insert_candles(ticker, candles);
+	db.insert_candles(ticker, candles, m);
 
 	for(auto c : *candles)  {
 		delete c;
