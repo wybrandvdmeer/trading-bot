@@ -65,7 +65,6 @@ void tradingbot::trade(int offset, int top_gainers_idx) {
             }
 
 			tradingbot::ticker = top_gainers->at(top_gainers_idx);
-            configure();
         }
 
 		if(!ticker.empty()) {

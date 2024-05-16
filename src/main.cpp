@@ -55,6 +55,7 @@ int main(int argc, char ** argv) {
 	if(debug_option != NULL) {
 		t.debug = true;
 	}
-	
+
+	t.configure();
 	t.trade(0, top_gainer_position);
 }
