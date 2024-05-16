@@ -71,8 +71,11 @@ void db_api::open_position(position p) {
 
 bool db_api::has_candle(std::string ticker, candle *c) {
 
+
 	open();
 	char sql[1000];
+
+
 	sprintf(sql, "SELECT COUNT(*) FROM candles WHERE ticker = '%s' AND time = %ld", 
 		ticker.c_str(), c->time);
 
@@ -171,8 +174,6 @@ void db_api::createSchema() {
 sqlite3_stmt * db_api::prepare(std::string sql) {
 	sqlite3_stmt *statement;
 	unsigned long ret=0;
-
-	open();
 
 	if(sqlite3_prepare(db, sql.c_str(), -1, &statement, NULL) != SQLITE_OK) {
 		close(statement);
