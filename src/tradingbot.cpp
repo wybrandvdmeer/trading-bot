@@ -58,9 +58,12 @@ void tradingbot::trade(int offset) {
 		return;
 	}
 
-	log_quality_candles(candles);
-
 	log.log("\nEvaluating %s", ticker.c_str());
+
+	if(!get_quality_candles(candles)) {
+		log.log("\nQuality candles too low.");
+		return;
+	}
 
 	macd * m = ind.calculate_macd(candles);
 
@@ -211,14 +214,20 @@ void tradingbot::sell(position *p) {
 	}
 }
 	
-void tradingbot::log_quality_candles(std::vector<candle*> *candles) {
-	int non_valid_candles=0;
+bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
+	float non_valid_candles=0;
 	for(auto c : *candles) {
 		if(c->open == 0 || c->close == 0) {
 			non_valid_candles++;
 		}
 	}
-	log.log("noOfCandles: %ld, noOfNonValidCandles: %d", candles->size() , non_valid_candles);
+
+	float quality = non_valid_candles/candles->size();
+
+	log.log("quality: %f%, noOfCandles: %ld, noOfNonValidCandles: %f", 
+		quality, candles->size() , non_valid_candles);
+	
+	return ((float) non_valid_candles / candles->size()) < 0.9;
 }
 
 void tradingbot::configure() {

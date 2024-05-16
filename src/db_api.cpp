@@ -14,14 +14,9 @@
 using namespace std;
 	
 void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m) {	
-	if(candles->size() >= 3) {
-		insert_candle(ticker, candles->at(candles->size() - 1 - 2), m->get_macd(2), m->get_signal(2));
-	}
-	if(candles->size() >= 2) {
-		insert_candle(ticker, candles->at(candles->size() - 1 - 1), m->get_macd(1), m->get_signal(1));
-	}
-	if(candles->size() >= 1) {
-		insert_candle(ticker, candles->at(candles->size() - 1 - 0), m->get_macd(0), m->get_signal(0));
+	int idx=0;
+	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end(); it++, idx++) {
+		insert_candle(ticker, *it, m->get_macd(idx), m->get_signal(idx));
 	}
 }
 

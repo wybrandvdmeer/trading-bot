@@ -25,7 +25,7 @@ private:
 	void buy(std::string ticker, float stock_price);
 	void sell(position * p);
 	candle * get_valid_candle(std::vector<candle*> * candles, int position);
-	void log_quality_candles(std::vector<candle*> *candles);
+	bool get_quality_candles(std::vector<candle*> *candles);
 	void finish(std::string ticker, std::vector<candle*> *candles, macd *m);
 	alpaca_api alpaca;
 };
