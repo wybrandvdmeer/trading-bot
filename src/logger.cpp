@@ -16,5 +16,5 @@ void logger::log(const char* fmt, ...) {
 
 	buf[strlen(buf)] = '\n';
 	buf[strlen(buf) + 1] = 0x00;
-	cout << buf;
+	cout << buf << std::flush;
 }
