@@ -34,6 +34,8 @@ tradingbot::tradingbot() {
 	tradingbot::sma_slow_range = 50;
 	tradingbot::sma_fast_range = 20;
 	tradingbot::sma_200 = 0;
+	tradingbot::force = false;
+	tradingbot::debug = false;
 }
 
 /*
@@ -43,12 +45,16 @@ macd scalping strategy nog te programmeren:
 3> risico analyze 
 */
 
-void tradingbot::trade(int offset, bool force, int top_gainers_idx) {
+void tradingbot::trade(int offset, int top_gainers_idx) {
 	tradingbot *t;
 	vector<std::string> * top_gainers=NULL;
 
+	if(debug) {
+		yahoo.debug = true;
+	}
+
 	while(true) {
-        if(!force && !nse_is_open()) {
+        if(!tradingbot::force && !nse_is_open()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000)); 
             continue;
         }

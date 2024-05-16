@@ -14,9 +14,10 @@ public:
 	tradingbot();
 	std::string ticker;
 	int sma_slow_range, sma_fast_range;
-	void trade(int offset, bool force, int top_gainers_idx);
+	void trade(int offset, int top_gainers_idx);
 	float calc_sma_200();
 	void configure();
+	bool force, debug;
 private:
 	float sma_200;
 	yahoo_api yahoo;

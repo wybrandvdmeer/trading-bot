@@ -13,6 +13,10 @@
 
 using namespace std;
 
+yahoo_api::yahoo_api() {
+	yahoo_api::debug = false;
+}
+
 std::string yahoo_api::getModuleString() {
 	set<std::string> modules;
 	// modules.insert("financialData");
@@ -62,6 +66,9 @@ std::vector<candle*>* yahoo_api::stockPrices(
 		+ "&interval=" + interval + "&includePrePost=False&events=div%2Csplits%2CcapitalGains";
 
 	std::string response = dl.request(url);
+	if(yahoo_api::debug) {
+		cout << response.c_str();
+	}
 
 	if(response.length() == 0) {
 		return NULL;

@@ -31,7 +31,6 @@ char* getOptionValue(char ** begin, char ** end, const std::string & option) {
 
 int main(int argc, char ** argv) {
 	logger log;
-	bool force=false;
 	int top_gainer_position = 0;
 	tradingbot t;
 			
@@ -44,8 +43,13 @@ int main(int argc, char ** argv) {
 
 	char *forceOption = getOption(argv, argv + argc, "--force");
 	if(forceOption != NULL) {
-		force = true;
+		t.force = true;
 	}
 	
-	t.trade(0, force, top_gainer_position);
+	char *debug_option = getOption(argv, argv + argc, "--debug");
+	if(debug_option != NULL) {
+		t.debug = true;
+	}
+	
+	t.trade(0, top_gainer_position);
 }
