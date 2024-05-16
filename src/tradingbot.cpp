@@ -46,7 +46,6 @@ macd scalping strategy nog te programmeren:
 */
 
 void tradingbot::trade(int offset, int top_gainers_idx) {
-	tradingbot *t;
 	vector<std::string> * top_gainers=NULL;
 
 	if(debug) {
@@ -59,7 +58,7 @@ void tradingbot::trade(int offset, int top_gainers_idx) {
             continue;
         }
 
-        if(top_gainers == NULL) { 
+        if(tradingbot::ticker.empty()) {
             top_gainers = tg.get();
            
             if(top_gainers->size() == 0) { 
@@ -69,10 +68,11 @@ void tradingbot::trade(int offset, int top_gainers_idx) {
 
 			tradingbot::ticker = top_gainers->at(top_gainers_idx);
             configure();
-            t = this;
         }
 
-		t->trade(0);
+		if(!ticker.empty()) {
+			trade(0);
+		}
 		
 		std::this_thread::sleep_for(std::chrono::milliseconds(60 * 1000));
 	}

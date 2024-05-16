@@ -35,6 +35,11 @@ int main(int argc, char ** argv) {
 	tradingbot t;
 			
 	log.log("Starting bot.");
+	
+	char *ticker = getOptionValue(argv, argv + argc, "--ticker");
+	if(ticker != NULL) {
+		t.ticker = std::string(ticker);
+	}
 
 	char *tgp = getOptionValue(argv, argv + argc, "--top-gainer-position");
 	if(tgp != NULL) {
