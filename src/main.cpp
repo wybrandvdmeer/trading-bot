@@ -29,30 +29,11 @@ char* getOptionValue(char ** begin, char ** end, const std::string & option) {
     return NULL;
 }
 
-bool nse_is_open() {
-	time_t now = time(NULL);
-	struct tm *tm_struct = localtime(&now);
-
-	int hour = tm_struct->tm_hour;
-	int minutes = tm_struct->tm_min;
-
-	if(hour >= 15 && hour < 22) {
-		if(hour == 15 && minutes <= 30) {
-			return false;
-		}
-		return true;
-	}
-	return false;
-}
-
 int main(int argc, char ** argv) {
-
-	top_gainers tg;
-	vector<std::string> * top_gainers = NULL;
-	tradingbot *t;
 	logger log;
 	bool force=false;
 	int top_gainer_position = 0;
+	tradingbot t;
 			
 	log.log("Starting bot.");
 
@@ -65,30 +46,6 @@ int main(int argc, char ** argv) {
 	if(forceOption != NULL) {
 		force = true;
 	}
-
-	while(true) {
-		if(!force && !nse_is_open()) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000));
-			continue;
-		}
-
-		if(top_gainers == NULL) {
-			top_gainers = tg.get();
-		
-			if(top_gainers->size() == 0) {
-				cout << "No top gainers.";
-				exit(1);
-			}
-
-			tradingbot tb(top_gainers->at(top_gainer_position));
-			tb.configure();
-			t = &tb;
-		}
-
-		t->trade(0);
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(60 * 1000));
-	}
-
-	exit(0);
+	
+	t.trade(0, force, top_gainer_position);
 }

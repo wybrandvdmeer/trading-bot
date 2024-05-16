@@ -20,6 +20,8 @@ std::vector<std::string> * top_gainers::get() {
 		}
 	}
 
+
+
 	return top_gainers;
 }
 

@@ -30,11 +30,9 @@ selectie uit top 5 topGainers.
 beurs nse begint om 15.30
 */
 
-tradingbot::tradingbot(std::string ticker) {
-	tradingbot::ticker = ticker;
+tradingbot::tradingbot() {
 	tradingbot::sma_slow_range = 50;
 	tradingbot::sma_fast_range = 20;
-
 	tradingbot::sma_200 = 0;
 }
 
@@ -44,6 +42,35 @@ macd scalping strategy nog te programmeren:
 2> visualiseren candles
 3> risico analyze 
 */
+
+void tradingbot::trade(int offset, bool force, int top_gainers_idx) {
+	tradingbot *t;
+	vector<std::string> * top_gainers=NULL;
+
+	while(true) {
+        if(!force && !nse_is_open()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000)); 
+            continue;
+        }
+
+        if(top_gainers == NULL) { 
+            top_gainers = tg.get();
+           
+            if(top_gainers->size() == 0) { 
+                cout << "No top gainers.";
+                exit(1);
+            }
+
+			tradingbot::ticker = top_gainers->at(top_gainers_idx);
+            configure();
+            t = this;
+        }
+
+		t->trade(0);
+		
+		std::this_thread::sleep_for(std::chrono::milliseconds(60 * 1000));
+	}
+}
 
 
 void tradingbot::trade(int offset) {
@@ -232,4 +259,20 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 
 void tradingbot::configure() {
 	db.createSchema();
+}
+
+bool tradingbot::nse_is_open() {
+	time_t now = time(NULL);
+	struct tm *tm_struct = localtime(&now);
+
+	int hour = tm_struct->tm_hour;
+	int minutes = tm_struct->tm_min;
+
+	if(hour >= 15 && hour < 22) {
+		if(hour == 15 && minutes <= 30) {
+			return false;
+		}
+		return true;
+	}
+	return false;
 }
