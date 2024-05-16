@@ -75,9 +75,15 @@ bool db_api::has_candle(std::string ticker, candle *c) {
 	char sql[1000];
 	sprintf(sql, "SELECT COUNT(*) FROM candles WHERE ticker = '%s' AND time = %ld", 
 		ticker.c_str(), c->time);
+
+	if(debug) {
+		log.log("%s", sql);
+	}
+
 	sqlite3_stmt * s = prepare(std::string(sql));
 
 	if(sqlite3_data_count(s) == 0) {
+		close(s);
 		return false;
 	}
 
