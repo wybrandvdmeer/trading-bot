@@ -20,11 +20,6 @@ std::vector<std::string> * top_gainers::get() {
 		}
 	}
 
-	log.log("Top gainers:");
-	for(auto t : *top_gainers) {
-		log.log("%s", t.c_str());
-	}
-
 	return top_gainers;
 }
 
