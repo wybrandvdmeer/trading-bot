@@ -34,6 +34,7 @@ tradingbot::tradingbot() {
 	tradingbot::sma_200 = 0;
 	tradingbot::force = false;
 	tradingbot::debug = false;
+	tradingbot::disable_alpaca = false;
 }
 
 /*
@@ -212,7 +213,7 @@ void tradingbot::buy(std::string ticker, float stock_price) {
 		p.sell_price,
 		p.loss_limit_price);
 
-	if(alpaca.open_position(p)) {
+	if(disable_alpaca || alpaca.open_position(p)) {
 		db.open_position(p);
 	}
 }
@@ -232,7 +233,7 @@ void tradingbot::sell(position *p) {
 		p->loss_limit_price,
 		p->stop_loss_activated);
 
-	if(alpaca.close_position(*p)) {
+	if(disable_alpaca || alpaca.close_position(*p)) {
 		db.close_position(*p);
 	}
 }

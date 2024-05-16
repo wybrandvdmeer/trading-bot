@@ -56,6 +56,11 @@ int main(int argc, char ** argv) {
 		t.debug = true;
 	}
 
+	char *disable_alpaca = getOption(argv, argv + argc, "--debug");
+	if(debug_option != NULL) {
+		t.disable_alpaca = true;
+	}
+
 	t.configure();
 	t.trade(0, top_gainer_position);
 }

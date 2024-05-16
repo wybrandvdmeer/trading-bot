@@ -15,7 +15,7 @@ public:
 	std::string ticker;
 	void trade(int offset, int top_gainers_idx);
 	void configure();
-	bool force, debug;
+	bool force, debug, disable_alpaca;
 private:
 	float sma_200;
 	yahoo_api yahoo;
