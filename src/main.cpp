@@ -56,8 +56,8 @@ int main(int argc, char ** argv) {
 		t.debug = true;
 	}
 
-	char *disable_alpaca = getOption(argv, argv + argc, "--debug");
-	if(debug_option != NULL) {
+	char *disable_alpaca = getOption(argv, argv + argc, "--disable-alpaca");
+	if(disable_alpaca != NULL) {
 		t.disable_alpaca = true;
 	}
 
