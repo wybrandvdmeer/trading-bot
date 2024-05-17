@@ -55,6 +55,7 @@ void tradingbot::trade(int top_gainers_idx) {
 	/* Back-testing against a db file. 
 	*/
 	if(!db_file.empty()) {
+		disable_alpaca = true;
 		std::string base_name = db_file.substr(db_file.find_last_of("/\\") + 1);
 		ticker = base_name.substr(0, base_name.find("-"));
 		db.ticker = ticker;
