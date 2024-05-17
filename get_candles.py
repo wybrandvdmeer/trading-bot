@@ -1,9 +1,20 @@
 import sqlite3
 import pandas as pd
-
+import sys
 import finplot as fplt
+from datetime import datetime, timedelta
 
-conn = sqlite3.connect('/tmp/tb.db')
+
+
+ticker = sys.argv[1].upper()
+
+days = 0
+if len(sys.argv) > 2:
+    days = int(sys.argv[2])
+
+dt = datetime.today() - timedelta(days=days)
+
+conn = sqlite3.connect('file:/db-files/' + ticker + '-' + dt.strftime('%Y%m%d') + '.db?mode=ro', uri=True)
 
 csr = conn.cursor()
 csr.execute("SELECT time, open, close, high, low FROM candles WHERE ticker = 'LSPD'")

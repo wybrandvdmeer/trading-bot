@@ -166,7 +166,7 @@ void db_api::get_date(std::string &s) {
 std::string db_api::get_data_file() {
 	std::string date_string;
 	get_date(date_string);
-	return "/db-files/" + db_api::ticker + "-" + date_string;
+	return "/db-files/" + db_api::ticker + "-" + date_string + ".db";
 }
 
 void db_api::drop_db() {
