@@ -44,12 +44,26 @@ macd scalping strategy nog te programmeren:
 3> risico analyze 
 */
 
-void tradingbot::trade(int offset, int top_gainers_idx) {
+void tradingbot::trade(int top_gainers_idx) {
 	vector<std::string> * top_gainers=NULL;
 
 	if(debug) {
 		yahoo.debug = true;
 		db.debug = true;
+	}
+
+	/* Back-testing against a db file. 
+	*/
+	if(!db_file.empty()) {
+		std::string base_name = db_file.substr(db_file.find_last_of("/\\") + 1);
+		ticker = base_name.substr(0, base_name.find("-"));
+		db.ticker = ticker;
+		db.drop_db();
+		db.create_schema();
+
+		std::vector<candle*> *candles = db.get_candles(db_file);
+		trade(candles);
+		return;
 	}
 
 	while(true) {
@@ -75,7 +89,13 @@ void tradingbot::trade(int offset, int top_gainers_idx) {
 		if(!ticker.empty()) {
 			db.ticker = ticker;
 			db.create_schema();
-			trade(0);
+	
+			std::vector<candle*> * candles = yahoo.stockPrices(ticker, "1m", "2d");
+			if(candles != NULL) {
+				trade(candles);
+			} else {
+				log.log("No candles received");
+			}
 		}
 		
 		std::this_thread::sleep_for(std::chrono::milliseconds(60 * 1000));
@@ -83,14 +103,7 @@ void tradingbot::trade(int offset, int top_gainers_idx) {
 }
 
 
-void tradingbot::trade(int offset) {
-	int noOfHistory = offset + 200 + 1; 
-	std::vector<candle*> * candles = yahoo.stockPrices(ticker, "1m", "2d");
-	if(candles == NULL) {
-		log.log("No candles received");
-		return;
-	}
-
+void tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("\nEvaluating %s", ticker.c_str());
 
 	if(!get_quality_candles(candles)) {
@@ -101,8 +114,8 @@ void tradingbot::trade(int offset) {
 	sma_200 = calc_sma_200(candles);
 	macd * m = ind.calculate_macd(candles);
 
-	candle * current = get_valid_candle(candles, 0 + offset);
-	candle * previous = get_valid_candle(candles, 1 + offset);
+	candle * current = get_valid_candle(candles, 0);
+	candle * previous = get_valid_candle(candles, 1);
 
 	float open_0 = current->open;
 	float close_0 = current->close;

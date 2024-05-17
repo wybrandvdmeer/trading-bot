@@ -12,8 +12,8 @@
 class tradingbot {
 public:
 	tradingbot();
-	std::string ticker;
-	void trade(int offset, int top_gainers_idx);
+	std::string ticker, db_file;
+	void trade(int top_gainers_idx);
 	bool force, debug, disable_alpaca;
 private:
 	float sma_200;
@@ -23,7 +23,7 @@ private:
 	logger log;
 	alpaca_api alpaca;
 	top_gainers tg;
-	void trade(int offset);
+	void trade(std::vector<candle*> * candles);
 	bool nse_is_open();
 	void buy(std::string ticker, float stock_price);
 	void sell(position * p);

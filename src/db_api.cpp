@@ -14,9 +14,34 @@ using namespace std;
 db_api::db_api() {
 	debug = false;
 }
+
+std::vector<candle*> * db_api::get_candles(std::string db_file) {
+	char sql[1000];
+	std::vector<candle*> *candles = new std::vector<candle*>();
+
+	open(db_file);
+	sprintf(sql, "SELECT time, open, close, low, high, volume FROM candles ORDER BY time");
+	if(debug) {
+		log.log("%s", sql);
+	}
+
+	sqlite3_stmt * s = prepare(std::string(sql));
+
+	for(;sqlite3_step(s) == SQLITE_ROW;) {
+		candle * c = new candle();
+		c->time = selectInt(s, 0);
+		c->open = selectFloat(s, 1);
+		c->close = selectFloat(s, 2);
+		c->low = selectFloat(s, 3);
+		c->high = selectFloat(s, 4);
+		c->volume = selectInt(s, 5);
+		candles->push_back(c);
+	}
+
+	return candles;
+}
 	
 void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m) {	
-
 	int idx=0;
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end(); it++, idx++) {
 		insert_candle(ticker, *it, 
@@ -82,6 +107,7 @@ bool db_api::has_candle(std::string ticker, candle *c) {
 	}
 
 	sqlite3_stmt * s = prepare(std::string(sql));
+    sqlite3_step(s);
 
 	if(sqlite3_data_count(s) == 0) {
 		close(s);
@@ -102,6 +128,7 @@ position * db_api::get_open_position(std::string ticker) {
 		FROM positions WHERE ticker = '%s' AND sell_time IS NULL",
 		ticker.c_str());
 	sqlite3_stmt * s = prepare(std::string(sql));
+	sqlite3_step(s);
 
 	if(sqlite3_data_count(s) == 0) {
 		close(s);
@@ -136,12 +163,21 @@ void db_api::get_date(std::string &s) {
 	s.append(buffer);
 }
 
-void db_api::open() {
-
+std::string db_api::get_data_file() {
 	std::string date_string;
 	get_date(date_string);
+	return "/db-files/" + db_api::ticker + "-" + date_string;
+}
 
-	std::string db_file="/db-files/" + db_api::ticker + "-" + date_string;
+void db_api::drop_db() {
+	std::remove(get_data_file().c_str());
+}
+
+void db_api::open() {
+	open(get_data_file());
+}
+
+void db_api::open(std::string db_file) {
 	if(sqlite3_open(db_file.c_str(), &db) != SQLITE_OK) {
         printf("ERROR: can't open database: %s\n", sqlite3_errmsg(db));
 		exit(1);
@@ -197,8 +233,6 @@ sqlite3_stmt * db_api::prepare(std::string sql) {
 		return NULL;
 	}
     
-	sqlite3_step(statement);
-
 	return statement;
 }
 

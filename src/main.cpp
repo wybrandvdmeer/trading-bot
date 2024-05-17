@@ -41,6 +41,11 @@ int main(int argc, char ** argv) {
 		t.ticker = std::string(ticker);
 	}
 
+	char *db_file = getOptionValue(argv, argv + argc, "--db-file");
+	if(db_file != NULL) {
+		t.db_file = std::string(db_file);
+	}
+
 	char *tgp = getOptionValue(argv, argv + argc, "--top-gainer-position");
 	if(tgp != NULL) {
 		top_gainer_position = atoi(tgp);
@@ -61,5 +66,5 @@ int main(int argc, char ** argv) {
 		t.disable_alpaca = true;
 	}
 
-	t.trade(0, top_gainer_position);
+	t.trade(top_gainer_position);
 }
