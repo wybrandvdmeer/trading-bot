@@ -186,7 +186,7 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 			sell(p);
 		}
 
-		finish(ticker, candles, m);
+		finish(ticker, candles, m, sma_200);
 		return;
 	}
 
@@ -202,11 +202,11 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 		buy(ticker, close_0);
 	}
 
-	finish(ticker, candles, m);
+	finish(ticker, candles, m, sma_200);
 }
 
-void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd * m) {
-	db.insert_candles(ticker, candles, m);
+void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd * m, float sma_200) {
+	db.insert_candles(ticker, candles, m, sma_200);
 
 	/* When backtesting, dont throw away the candles. 
 	*/

@@ -13,6 +13,7 @@ using namespace std;
 
 db_api::db_api() {
 	debug = false;
+	read_only = false;
 }
 
 std::vector<candle*> * db_api::get_candles(std::string db_file) {
@@ -20,6 +21,7 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 	std::vector<candle*> *candles = new std::vector<candle*>();
 
 	open(db_file);
+	read_only=true;
 	sprintf(sql, "SELECT time, open, close, low, high, volume FROM candles ORDER BY time");
 	if(debug) {
 		log.log("%s", sql);
@@ -41,13 +43,28 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 	return candles;
 }
 	
-void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m) {	
+void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m, 
+	float sma_200) {	
 	int idx=0;
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end(); it++, idx++) {
 		insert_candle(ticker, *it, 
 			m->get_macd(candles->size() - 1 - idx), 
 			m->get_signal(candles->size() - 1 - idx));
 	}
+
+	// sma value is only calculated for the last candle.
+	update_sma_200(candles->at(candles->size() - 1), sma_200);
+}
+
+void db_api::update_sma_200(candle *c, float sma_200) {
+	open();
+	char sql[1000];
+	sprintf(sql, "UPDATE candles SET sma_200 = %f WHERE time = %ld", sma_200, c->time);
+	if(debug) {
+		log.log("%s", sql);
+	}
+
+	execDml(sql);
 }
 
 void db_api::insert_candle(std::string ticker, candle *c, float macd, float signal) {	
@@ -166,7 +183,7 @@ void db_api::get_date(std::string &s) {
 std::string db_api::get_data_file() {
 	std::string date_string;
 	get_date(date_string);
-	return "/db-files/" + db_api::ticker + "-" + date_string + ".db";
+	return "file:/db-files/" + db_api::ticker + "-" + date_string + ".db";
 }
 
 void db_api::drop_db() {
@@ -178,7 +195,12 @@ void db_api::open() {
 }
 
 void db_api::open(std::string db_file) {
-	if(sqlite3_open(db_file.c_str(), &db) != SQLITE_OK) {
+	if(read_only) {
+		db_file = db_file + "?mode=ro";
+	}
+
+	if(sqlite3_open_v2(db_file.c_str(), &db,  
+		SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) {
         printf("ERROR: can't open database: %s\n", sqlite3_errmsg(db));
 		exit(1);
     }

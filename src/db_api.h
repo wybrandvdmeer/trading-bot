@@ -20,7 +20,7 @@ public:
 	position * get_open_position(std::string ticker);
 	void open_position(position p);
 	void close_position(position p);
-	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m);
+	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m, float sma_200);
 	std::vector<candle*> *get_candles(std::string db_file);
 	bool debug;
 	std::string ticker;
@@ -38,7 +38,9 @@ private:
 	void insert_candle(std::string ticker, candle *c, float macd, float signal);
 	void get_date(std::string &s);
 	std::string get_data_file();
+	void update_sma_200(candle *c, float sma_200);
 	logger log;
+	bool read_only;
 };
 
 #endif
