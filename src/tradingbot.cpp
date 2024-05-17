@@ -63,7 +63,30 @@ void tradingbot::trade(int top_gainers_idx) {
 		db.create_schema();
 
 		std::vector<candle*> *candles = db.get_candles(db_file);
-		trade(candles);
+
+		/* Find position of last day.
+		*/
+		int idx=0, day_break_position=-1, first_day, prv_day=-1;
+		for(auto c : *candles) {
+			first_day = localtime(&(c->time))->tm_wday;
+			if(prv_day == -1) {
+				prv_day = first_day;
+			} else
+			if(prv_day != first_day) {
+				day_break_position = idx;
+				prv_day = first_day;
+			}
+			idx++;
+		}
+
+		for(idx=day_break_position; idx < candles->size(); idx++) {
+			std::vector<candle*> * v = new std::vector<candle*>();
+			for(int idx2=0; idx2 < idx; idx2++) {
+				v->push_back(candles->at(idx2));
+			}
+			trade(v);
+		}
+
 		return;
 	}
 
@@ -185,8 +208,14 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd * m) {
 	db.insert_candles(ticker, candles, m);
 
+	/* When backtesting, dont throw away the candles. 
+	*/
+	if(!db_file.empty()) {
+		return;
+	}
+	
 	for(auto c : *candles)  {
-		delete c;
+			delete c;
 	}
 
 	delete candles;
