@@ -15,12 +15,13 @@
 class db_api {
 public:
 	db_api();
-	void createSchema();
+	void create_schema();
 	position * get_open_position(std::string ticker);
 	void open_position(position p);
 	void close_position(position p);
 	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m);
 	bool debug;
+	std::string ticker;
 private:
 	sqlite3 * db;
 	void open();

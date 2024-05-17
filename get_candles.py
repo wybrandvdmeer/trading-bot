@@ -6,7 +6,7 @@ import finplot as fplt
 conn = sqlite3.connect('/tmp/tb.db')
 
 csr = conn.cursor()
-csr.execute("SELECT time, open, close, high, low FROM candles WHERE ticker = 'BTDPF'")
+csr.execute("SELECT time, open, close, high, low FROM candles WHERE ticker = 'LSPD'")
 
 time = []
 open = []

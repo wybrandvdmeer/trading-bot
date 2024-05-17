@@ -61,6 +61,5 @@ int main(int argc, char ** argv) {
 		t.disable_alpaca = true;
 	}
 
-	t.configure();
 	t.trade(0, top_gainer_position);
 }

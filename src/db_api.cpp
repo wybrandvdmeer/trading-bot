@@ -9,8 +9,6 @@
 #include "db_api.h"
 #include "macd.h"
 
-#define DB_FILE "/tmp/tb.db"
-
 using namespace std;
 
 db_api::db_api() {
@@ -73,11 +71,8 @@ void db_api::open_position(position p) {
 }
 
 bool db_api::has_candle(std::string ticker, candle *c) {
-
-
 	open();
 	char sql[1000];
-
 
 	sprintf(sql, "SELECT COUNT(*) FROM candles WHERE ticker = '%s' AND time = %ld", 
 		ticker.c_str(), c->time);
@@ -128,7 +123,8 @@ position * db_api::get_open_position(std::string ticker) {
 }
 
 void db_api::open() {
-	if(sqlite3_open(DB_FILE, &db) != SQLITE_OK) {
+	std::string db_file="/db-files/" + db_api::ticker;
+	if(sqlite3_open(db_file.c_str(), &db) != SQLITE_OK) {
         printf("ERROR: can't open database: %s\n", sqlite3_errmsg(db));
 		exit(1);
     }
@@ -163,7 +159,7 @@ end:
 	close(stmt);
 }
 
-void db_api::createSchema() {
+void db_api::create_schema() {
 	open();
 	execDml("CREATE TABLE positions (ticker VARCHAR(10), buy_time INTEGER , sell_time INTEGER, \
 		no_of_stocks INTEGER, stock_price REAL, sell_price REAL, loss_limit_price REAL, \

@@ -70,6 +70,8 @@ void tradingbot::trade(int offset, int top_gainers_idx) {
         }
 
 		if(!ticker.empty()) {
+			db.ticker = ticker;
+			db.create_schema();
 			trade(0);
 		}
 		
@@ -252,10 +254,6 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 		quality, candles->size() , non_valid_candles);
 	
 	return quality >= 0.9;
-}
-
-void tradingbot::configure() {
-	db.createSchema();
 }
 
 bool tradingbot::nse_is_open() {
