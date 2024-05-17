@@ -20,8 +20,10 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 	char sql[1000];
 	std::vector<candle*> *candles = new std::vector<candle*>();
 
-	open(db_file);
 	read_only=true;
+	open(db_file);
+	read_only=false;
+
 	sprintf(sql, "SELECT time, open, close, low, high, volume FROM candles ORDER BY time");
 	if(debug) {
 		log.log("%s", sql);
@@ -74,7 +76,8 @@ void db_api::insert_candle(std::string ticker, candle *c, float macd, float sign
 
 	open();
 	char sql[1000];
-	sprintf(sql, "INSERT INTO candles VALUES('%s', %ld, %f, %f, %f, %f, %ld, %f, %f)", 
+	sprintf(sql, "INSERT INTO candles(ticker, time, open, close, low, high, volume, macd, signal) \
+		VALUES('%s', %ld, %f, %f, %f, %f, %ld, %f, %f)", 
 		ticker.c_str(), 
 		c->time, 
 		c->open,
@@ -195,16 +198,19 @@ void db_api::open() {
 }
 
 void db_api::open(std::string db_file) {
+	int ret;
 	if(read_only) {
-		db_file = db_file + "?mode=ro";
+		ret = sqlite3_open_v2(db_file.c_str(), &db, SQLITE_OPEN_READONLY , NULL);
+	} else {
+		ret = sqlite3_open_v2(db_file.c_str(), &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE , NULL);
 	}
 
-	if(sqlite3_open_v2(db_file.c_str(), &db,  
-		SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) {
-        printf("ERROR: can't open database: %s\n", sqlite3_errmsg(db));
+	if(ret != SQLITE_OK) {
+		printf("ERROR: can't open database: %s\n", sqlite3_errmsg(db));
 		exit(1);
-    }
+	}
 }
+
 
 void db_api::close() {
 	close(NULL);
@@ -243,7 +249,7 @@ void db_api::create_schema() {
 
 	open();
 	execDml("CREATE TABLE candles (ticker VARCHAR(10), time INTEGER, open REAL, close REAL, low REAL, \
-			 high REAL, volume INTEGER, macd REAL, signal REAL)");
+			 high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL)");
 }
 
 sqlite3_stmt * db_api::prepare(std::string sql) {
