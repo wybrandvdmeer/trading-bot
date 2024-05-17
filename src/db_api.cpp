@@ -122,8 +122,26 @@ position * db_api::get_open_position(std::string ticker) {
 	return p;
 }
 
+void db_api::get_date(std::string &s) {
+	s.erase();
+
+	time_t rawtime;
+	struct tm * timeinfo;
+	char buffer[80];
+
+	time (&rawtime);
+	timeinfo = localtime(&rawtime);
+  
+	strftime(buffer,sizeof(buffer),"%Y%m%d",timeinfo);
+	s.append(buffer);
+}
+
 void db_api::open() {
-	std::string db_file="/db-files/" + db_api::ticker;
+
+	std::string date_string;
+	get_date(date_string);
+
+	std::string db_file="/db-files/" + db_api::ticker + "-" + date_string;
 	if(sqlite3_open(db_file.c_str(), &db) != SQLITE_OK) {
         printf("ERROR: can't open database: %s\n", sqlite3_errmsg(db));
 		exit(1);

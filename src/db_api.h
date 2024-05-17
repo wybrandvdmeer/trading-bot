@@ -33,6 +33,7 @@ private:
 	sqlite3_stmt * prepare(std::string sql);
 	bool has_candle(std::string ticker, candle * c);
 	void insert_candle(std::string ticker, candle *c, float macd, float signal);
+	void get_date(std::string &s);
 	logger log;
 };
 
