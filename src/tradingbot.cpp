@@ -54,6 +54,9 @@ void tradingbot::trade(int offset, int top_gainers_idx) {
 
 	while(true) {
         if(!tradingbot::force && !nse_is_open()) {
+			if(!ticker.empty()) {
+				ticker.erase();
+			}
             std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000)); 
             continue;
         }
@@ -259,6 +262,10 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 bool tradingbot::nse_is_open() {
 	time_t now = time(NULL);
 	struct tm *tm_struct = localtime(&now);
+
+	if(tm_struct->tm_wday == 0 || tm_struct->tm_wday >= 6) {
+		return false;
+	}
 
 	int hour = tm_struct->tm_hour;
 	int minutes = tm_struct->tm_min;
