@@ -95,7 +95,7 @@ void db_api::close_position(position p) {
 	open();
 	char sql[1000];
 	sprintf(sql, "UPDATE positions SET sell_time = %ld, stop_loss_activated = %d\
-		WHERE ticker = '%s'", time(0), p.stop_loss_activated, p.ticker.c_str());
+		WHERE ticker = '%s'", p.sell, p.stop_loss_activated, p.ticker.c_str());
 	execDml(sql);
 }
 

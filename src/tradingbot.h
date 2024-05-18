@@ -25,7 +25,7 @@ private:
 	top_gainers tg;
 	void trade(std::vector<candle*> * candles);
 	bool nse_is_open();
-	void buy(std::string ticker, float stock_price);
+	void buy(std::string ticker, float stock_price, long buy_time);
 	void sell(position * p);
 	candle * get_valid_candle(std::vector<candle*> * candles, int position);
 	bool get_quality_candles(std::vector<candle*> *candles);

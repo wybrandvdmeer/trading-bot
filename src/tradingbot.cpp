@@ -183,6 +183,13 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 		}
 
 		if(bSell) {
+			/* In case of back-testing, the candle time is leading. 
+			*/
+			if(db_file.empty()) {
+				p->sell = time(0);
+			} else {
+				p->sell = current->time;
+			}
 			sell(p);
 		}
 
@@ -199,7 +206,13 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 	if(m->get_macd(0) <= m->get_signal(0)) {
 		log.log("no trade: macd(%f) is smaller then signal (%f).", m->get_macd(0), m->get_signal(0));
 	} else {
-		buy(ticker, close_0);
+		/* In case of back-testing, the candle time is leading. 
+		*/
+		if(db_file.empty()) {
+			buy(ticker, close_0, time(0));
+		} else {
+			buy(ticker, close_0, current->time);
+		}
 	}
 
 	finish(ticker, candles, m, sma_200);
@@ -236,13 +249,12 @@ candle * tradingbot::get_valid_candle(std::vector<candle*> * candles, int positi
 	return NULL;
 }
 
-void tradingbot::buy(std::string ticker, float stock_price) {
-
+void tradingbot::buy(std::string ticker, float stock_price, long buy_time) {
 	position p;
 	p.ticker = ticker;
-	p.buy = time(0);
 	p.no_of_stocks = 200 / ((int)stock_price);
 	p.stock_price = stock_price;
+	p.buy = buy_time;
 
 	if(p.no_of_stocks <= 0) {
 		log.log("No-of-stocks calculated is 0.");
