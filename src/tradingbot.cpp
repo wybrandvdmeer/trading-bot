@@ -169,10 +169,10 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 				m->get_macd(0) , m->get_signal(0));
 			bSell = true;
 		} else
-		if(close_0 >= p->sell_price) {
+		if(close_0 >= p->sell_off_price) {
 			p->stop_loss_activated = 0;
 			log.log("sell: current price (%f) is above selling price (%f)." ,
-				close_0 , p->sell_price);
+				close_0 , p->sell_off_price);
 			bSell = true;
 		} else
 		if(close_0 <= p->loss_limit_price) {
@@ -264,13 +264,13 @@ void tradingbot::buy(std::string ticker, float stock_price, long buy_time) {
 	// inzet: 200, risk: 5% -> 20 euro risico.  
 	float risk_per_stock = ((float)10)/p.no_of_stocks;
 	p.loss_limit_price = stock_price - risk_per_stock;
-	p.sell_price = stock_price + risk_per_stock * 4;
+	p.sell_off_price = stock_price + risk_per_stock * 4;
 	
-	log.log("Buy (%s), price: %f, number: %d, sell_price: %f, loss-limit: %f", 
+	log.log("Buy (%s), price: %f, number: %d, sell_off_price: %f, loss-limit: %f", 
 		ticker.c_str(), 
 		p.stock_price,
 		p.no_of_stocks,
-		p.sell_price,
+		p.sell_off_price,
 		p.loss_limit_price);
 
 	if(disable_alpaca || alpaca.open_position(p)) {
@@ -285,11 +285,11 @@ float tradingbot::calc_sma_200(std::vector<candle*> * candles) {
 }
 
 void tradingbot::sell(position *p) {
-	log.log("Sell (%s), price: %f, number: %d, sell_price: %f, loss-limit: %f, stop_loss_activated: %d", 
+	log.log("Sell (%s), price: %f, number: %d, sell_off_price: %f, loss-limit: %f, stop_loss_activated: %d", 
 		ticker.c_str(), 
 		p->stock_price,
 		p->no_of_stocks,
-		p->sell_price,
+		p->sell_off_price,
 		p->loss_limit_price,
 		p->stop_loss_activated);
 

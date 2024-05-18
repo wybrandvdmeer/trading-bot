@@ -103,13 +103,13 @@ void db_api::open_position(position p) {
 	open();
 	char sql[1000];
 	sprintf(sql, 
-		"INSERT INTO POSITIONS(ticker, buy_time, no_of_stocks, stock_price, sell_price,\
+		"INSERT INTO POSITIONS(ticker, buy_time, no_of_stocks, stock_price, sell_off_price,\
 		loss_limit_price, stop_loss_activated) VALUES('%s', %ld, %d, %f, %f, %f, 0)", 
 		p.ticker.c_str(),
 		p.buy,
 		p.no_of_stocks,
 		p.stock_price, 
-		p.sell_price,
+		p.sell_off_price,
 		p.loss_limit_price);
 
 	execDml(sql);
@@ -144,7 +144,7 @@ position * db_api::get_open_position(std::string ticker) {
 	open();
 	char sql[1000];
 	sprintf(sql, 
-	"SELECT buy_time, sell_time, no_of_stocks, stock_price, sell_price, loss_limit_price \
+	"SELECT buy_time, sell_time, no_of_stocks, stock_price, sell_off_price, loss_limit_price \
 		FROM positions WHERE ticker = '%s' AND sell_time IS NULL",
 		ticker.c_str());
 	sqlite3_stmt * s = prepare(std::string(sql));
@@ -161,7 +161,7 @@ position * db_api::get_open_position(std::string ticker) {
 	p->sell = selectInt(s, 1);
 	p->no_of_stocks = selectInt(s, 2);
 	p->stock_price = selectFloat(s, 3);
-	p->sell_price = selectFloat(s, 4);
+	p->sell_off_price = selectFloat(s, 4);
 	p->loss_limit_price = selectFloat(s, 5);
 
 	close(s);
@@ -244,7 +244,7 @@ end:
 void db_api::create_schema() {
 	open();
 	execDml("CREATE TABLE positions (ticker VARCHAR(10), buy_time INTEGER , sell_time INTEGER, \
-		no_of_stocks INTEGER, stock_price REAL, sell_price REAL, loss_limit_price REAL, \
+		no_of_stocks INTEGER, stock_price REAL, sell_off_price REAL, loss_limit_price REAL, \
 		stop_loss_activated INTEGER)");
 
 	open();
