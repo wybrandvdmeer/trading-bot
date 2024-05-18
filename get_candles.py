@@ -20,13 +20,16 @@ print("DB-file: " + db_file)
 conn = sqlite3.connect(db_file, uri=True)
 
 csr = conn.cursor()
-csr.execute("SELECT time, open, close, high, low FROM candles WHERE ticker = '" + ticker + "'")
+csr.execute("SELECT time, open, close, high, low, macd, signal, sma_200 FROM candles WHERE ticker = '" + ticker + "'")
 
 time = []
 open = []
 close = []
 low = []
 high = []
+mac_d = []
+signal = []
+sma_200 = []
 
 fplt.display_timezone = gettz('US/Eastern')
 
@@ -37,6 +40,9 @@ for row in csr:
     close.append(row[2])
     high.append(row[3])
     low.append(row[4])
+    mac_d.append(row[5])
+    signal.append(row[6])
+    sma_200.append(row[7])
     time.append(datetime.utcfromtimestamp(row[0]))
 
 if len(open) == 0:
@@ -45,6 +51,10 @@ if len(open) == 0:
 
 stock_prices = pd.DataFrame({'datetime': time, 'open': open, 'close': close, 'high': high, 'low': low})
 stock_prices = stock_prices.set_index('datetime')
+
+dates = []
+for d in stock_prices.index:
+    dates.append(d)
 
 buy_time = []
 sell_time = []
@@ -60,7 +70,9 @@ for row in csr:
     sell_price.append(row[3])
 
 conn.close()
-
+fplt.plot(dates, sma_200)
+fplt.plot(dates, mac_d)
+fplt.plot(dates, signal)
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
 
 positions = pd.DataFrame({'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 'sell_price': sell_price})
