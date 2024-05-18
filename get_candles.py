@@ -4,6 +4,7 @@ import sys
 import finplot as fplt
 from datetime import datetime, timedelta
 import pytz
+from dateutil.tz import gettz
 
 ticker = sys.argv[1].upper()
 
@@ -25,7 +26,7 @@ close = []
 low = []
 high = []
 
-est = pytz.timezone('US/Eastern')
+fplt.display_timezone = gettz('US/Eastern')
 
 for row in csr:
     if row[1] == 0:
@@ -35,7 +36,7 @@ for row in csr:
     high.append(row[3])
     low.append(row[4])
     # 6 hours: time is utc. EDT = -4, but finplot converses to local ams (+2) time and I cannot disable this.
-    time.append(datetime.utcfromtimestamp(row[0] - 6 * 3600))
+    time.append(datetime.utcfromtimestamp(row[0]))
 
 if len(open) == 0:
     print("No data.")
