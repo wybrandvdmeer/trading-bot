@@ -79,6 +79,4 @@ for index, row in positions.iterrows():
 
 conn.close()
 
-finplot.set_y_range(5,20)
-
 fplt.show()
