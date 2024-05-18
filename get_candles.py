@@ -35,7 +35,6 @@ for row in csr:
     close.append(row[2])
     high.append(row[3])
     low.append(row[4])
-    # 6 hours: time is utc. EDT = -4, but finplot converses to local ams (+2) time and I cannot disable this.
     time.append(datetime.utcfromtimestamp(row[0]))
 
 if len(open) == 0:
