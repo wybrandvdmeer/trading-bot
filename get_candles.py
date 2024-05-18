@@ -1,11 +1,8 @@
 import sqlite3
-
-import finplot
 import pandas as pd
 import sys
 import finplot as fplt
 from datetime import datetime, timedelta
-import pytz
 from dateutil.tz import gettz
 
 ticker = sys.argv[1].upper()
