@@ -38,6 +38,7 @@ private:
 	void insert_candle(std::string ticker, candle *c, float macd, float signal);
 	void get_date(std::string &s);
 	std::string get_data_file();
+	std::string get_data_file(bool uri);
 	void update_sma_200(candle *c, float sma_200);
 	logger log;
 	bool read_only;

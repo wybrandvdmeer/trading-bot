@@ -184,13 +184,21 @@ void db_api::get_date(std::string &s) {
 }
 
 std::string db_api::get_data_file() {
+	return get_data_file(true);
+}
+
+std::string db_api::get_data_file(bool uri) {
 	std::string date_string;
 	get_date(date_string);
-	return "file:/db-files/" + db_api::ticker + "-" + date_string + ".db";
+	std::string data_file = "/db-files/" + db_api::ticker + "-" + date_string + ".db";
+	if(!uri) {
+		return data_file;
+	}
+	return "file:" + data_file;
 }
 
 void db_api::drop_db() {
-	std::remove(get_data_file().c_str());
+	std::remove(get_data_file(false).c_str());
 }
 
 void db_api::open() {
@@ -244,10 +252,9 @@ end:
 void db_api::create_schema() {
 	open();
 	execDml("CREATE TABLE positions (ticker VARCHAR(10), buy_time INTEGER , sell_time INTEGER, \
-		no_of_stocks INTEGER, stock_price REAL, sell_price REAL \
+		no_of_stocks INTEGER, stock_price REAL, sell_price REAL, \
 		sell_off_price REAL, loss_limit_price REAL, \
 		stop_loss_activated INTEGER)");
-
 	open();
 	execDml("CREATE TABLE candles (ticker VARCHAR(10), time INTEGER, open REAL, close REAL, low REAL, \
 			 high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL)");
