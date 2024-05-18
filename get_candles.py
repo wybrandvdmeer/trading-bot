@@ -33,6 +33,8 @@ sma_200 = []
 
 fplt.display_timezone = gettz('US/Eastern')
 
+ax, ax2 = fplt.create_plot('S&P 500 MACD', rows=2)
+
 for row in csr:
     if row[1] == 0:
         continue
@@ -70,9 +72,9 @@ for row in csr:
     sell_price.append(row[3])
 
 conn.close()
-fplt.plot(dates, sma_200)
-fplt.plot(dates, mac_d)
-fplt.plot(dates, signal)
+
+fplt.plot(mac_d, ax=ax2, legend='MACD')
+fplt.plot(signal, ax=ax2, legend='Signal')
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
 
 positions = pd.DataFrame({'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 'sell_price': sell_price})
