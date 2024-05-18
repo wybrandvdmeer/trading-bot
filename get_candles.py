@@ -11,8 +11,9 @@ if len(sys.argv) > 2:
     days = int(sys.argv[2])
 
 dt = datetime.today() - timedelta(days=days)
-
-conn = sqlite3.connect('file:/db-files/' + ticker + '-' + dt.strftime('%Y%m%d') + '.db?mode=ro', uri=True)
+db_file = 'file:/db-files/' + ticker + '-' + dt.strftime('%Y%m%d') + '.db?mode=ro'
+print("DB-file: " + db_file)
+conn = sqlite3.connect(db_file, uri=True)
 
 csr = conn.cursor()
 csr.execute("SELECT time, open, close, high, low FROM candles WHERE ticker = '" + ticker + "'")
