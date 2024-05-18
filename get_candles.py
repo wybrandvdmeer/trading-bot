@@ -54,8 +54,8 @@ sell_price = []
 csr.execute("SELECT buy_time, sell_time, stock_price, sell_price FROM positions WHERE ticker = '" + ticker + "'")
 
 for row in csr:
-    buy_time.append(datetime.utcfromtimestamp(row[0] - 6 * 3600))
-    sell_time.append(datetime.utcfromtimestamp(row[1] - 6 * 3600))
+    buy_time.append(datetime.utcfromtimestamp(row[0]))
+    sell_time.append(datetime.utcfromtimestamp(row[1]))
     buy_price.append(row[2])
     sell_price.append(row[3])
 
@@ -69,13 +69,10 @@ positions.reset_index()
 for index, row in positions.iterrows():
     x1 = row['buy_time']
     y1 = row['buy_price']
-
     x2 = row['sell_time']
     y2 = row['sell_price']
+
     line = fplt.add_line((x1, y1), (x2, y2), color='#9900ff', interactive=True)
-    print(x1, y1)
-    print(x2, y2)
-    break
 
 conn.close()
 
