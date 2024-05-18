@@ -94,8 +94,8 @@ void db_api::insert_candle(std::string ticker, candle *c, float macd, float sign
 void db_api::close_position(position p) {
 	open();
 	char sql[1000];
-	sprintf(sql, "UPDATE positions SET sell_time = %ld, stop_loss_activated = %d\
-		WHERE ticker = '%s'", p.sell, p.stop_loss_activated, p.ticker.c_str());
+	sprintf(sql, "UPDATE positions SET sell_time = %ld, sell_price = %f, stop_loss_activated = %d\
+		WHERE ticker = '%s'", p.sell, p.sell_price, p.stop_loss_activated, p.ticker.c_str());
 	execDml(sql);
 }
 
@@ -244,7 +244,8 @@ end:
 void db_api::create_schema() {
 	open();
 	execDml("CREATE TABLE positions (ticker VARCHAR(10), buy_time INTEGER , sell_time INTEGER, \
-		no_of_stocks INTEGER, stock_price REAL, sell_off_price REAL, loss_limit_price REAL, \
+		no_of_stocks INTEGER, stock_price REAL, sell_price REAL \
+		sell_off_price REAL, loss_limit_price REAL, \
 		stop_loss_activated INTEGER)");
 
 	open();

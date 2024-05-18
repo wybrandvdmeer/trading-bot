@@ -183,6 +183,8 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 		}
 
 		if(bSell) {
+			p->sell_price = close_0;
+
 			/* In case of back-testing, the candle time is leading. 
 			*/
 			if(db_file.empty()) {
@@ -285,11 +287,11 @@ float tradingbot::calc_sma_200(std::vector<candle*> * candles) {
 }
 
 void tradingbot::sell(position *p) {
-	log.log("Sell (%s), price: %f, number: %d, sell_off_price: %f, loss-limit: %f, stop_loss_activated: %d", 
+	log.log("Sell (%s), price: %f, number: %d, sell_price: %f, loss-limit: %f, stop_loss_activated: %d", 
 		ticker.c_str(), 
 		p->stock_price,
 		p->no_of_stocks,
-		p->sell_off_price,
+		p->sell_price,
 		p->loss_limit_price,
 		p->stop_loss_activated);
 
