@@ -95,16 +95,18 @@ void db_api::close_position(position p) {
 	open();
 	char sql[1000];
 	sprintf(sql, "UPDATE positions SET sell_time = %ld, sell_price = %f, stop_loss_activated = %d\
-		WHERE ticker = '%s'", p.sell, p.sell_price, p.stop_loss_activated, p.ticker.c_str());
+		WHERE id = %d", p.sell, p.sell_price, p.stop_loss_activated, p.id);
 	execDml(sql);
 }
 
 void db_api::open_position(position p) {
+	int no_of_positions = select_no_of_positions();
 	open();
 	char sql[1000];
 	sprintf(sql, 
-		"INSERT INTO POSITIONS(ticker, buy_time, no_of_stocks, stock_price, sell_off_price,\
-		loss_limit_price, stop_loss_activated) VALUES('%s', %ld, %d, %f, %f, %f, 0)", 
+		"INSERT INTO POSITIONS(id, ticker, buy_time, no_of_stocks, stock_price, sell_off_price,\
+		loss_limit_price, stop_loss_activated) VALUES(%d, '%s', %ld, %d, %f, %f, %f, 0)", 
+		no_of_positions + 1,
 		p.ticker.c_str(),
 		p.buy,
 		p.no_of_stocks,
@@ -113,6 +115,30 @@ void db_api::open_position(position p) {
 		p.loss_limit_price);
 
 	execDml(sql);
+}
+
+int db_api::select_no_of_positions() {
+    open();
+    char sql[1000];
+
+    sprintf(sql, "SELECT COUNT(*) FROM positions");
+
+    if(debug) {
+        log.log("%s", sql);
+    }
+
+    sqlite3_stmt * s = prepare(std::string(sql));
+    sqlite3_step(s);
+
+    if(sqlite3_data_count(s) == 0) {
+        close(s);
+        return 0;
+    }
+
+    int count = selectInt(s, 0);
+
+    close(s);
+    return count;
 }
 
 bool db_api::has_candle(std::string ticker, candle *c) {
@@ -144,7 +170,7 @@ position * db_api::get_open_position(std::string ticker) {
 	open();
 	char sql[1000];
 	sprintf(sql, 
-	"SELECT buy_time, sell_time, no_of_stocks, stock_price, sell_off_price, loss_limit_price \
+	"SELECT id, buy_time, sell_time, no_of_stocks, stock_price, sell_off_price, loss_limit_price \
 		FROM positions WHERE ticker = '%s' AND sell_time IS NULL",
 		ticker.c_str());
 	sqlite3_stmt * s = prepare(std::string(sql));
@@ -157,12 +183,13 @@ position * db_api::get_open_position(std::string ticker) {
 
 	position *p = new position();
 	p->ticker = ticker;
-	p->buy = selectInt(s, 0);
-	p->sell = selectInt(s, 1);
-	p->no_of_stocks = selectInt(s, 2);
-	p->stock_price = selectFloat(s, 3);
-	p->sell_off_price = selectFloat(s, 4);
-	p->loss_limit_price = selectFloat(s, 5);
+	p->id = selectInt(s, 0);
+	p->buy = selectInt(s, 1);
+	p->sell = selectInt(s, 2);
+	p->no_of_stocks = selectInt(s, 3);
+	p->stock_price = selectFloat(s, 4);
+	p->sell_off_price = selectFloat(s, 5);
+	p->loss_limit_price = selectFloat(s, 6);
 
 	close(s);
 
@@ -240,7 +267,7 @@ void db_api::execDml(std::string sql) {
 
     if(sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL) != SQLITE_OK) {
         printf("ERROR: while compiling sql: %s\n", sqlite3_errmsg(db));
-		goto end;
+		exit(1);
     }
 
     sqlite3_step(stmt);
@@ -251,10 +278,9 @@ end:
 
 void db_api::create_schema() {
 	open();
-	execDml("CREATE TABLE positions (ticker VARCHAR(10), buy_time INTEGER , sell_time INTEGER, \
-		no_of_stocks INTEGER, stock_price REAL, sell_price REAL, \
-		sell_off_price REAL, loss_limit_price REAL, \
-		stop_loss_activated INTEGER)");
+	execDml("CREATE TABLE positions (id INTEGER NOT NULL, ticker VARCHAR(10), buy_time INTEGER , \
+		sell_time INTEGER, no_of_stocks INTEGER, stock_price REAL, sell_price REAL, \
+		sell_off_price REAL, loss_limit_price REAL, stop_loss_activated INTEGER)");
 	open();
 	execDml("CREATE TABLE candles (ticker VARCHAR(10), time INTEGER, open REAL, close REAL, low REAL, \
 			 high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL)");
@@ -265,8 +291,8 @@ sqlite3_stmt * db_api::prepare(std::string sql) {
 	unsigned long ret=0;
 
 	if(sqlite3_prepare(db, sql.c_str(), -1, &statement, NULL) != SQLITE_OK) {
-		close(statement);
-		return NULL;
+        printf("ERROR: while preparing sql: %s\n", sqlite3_errmsg(db));
+		exit(1);
 	}
     
 	return statement;
