@@ -3,6 +3,7 @@ import pandas as pd
 import sys
 import finplot as fplt
 from datetime import datetime, timedelta
+import pytz
 
 ticker = sys.argv[1].upper()
 
@@ -24,21 +25,24 @@ close = []
 low = []
 high = []
 
+est = pytz.timezone('US/Eastern')
+
 for row in csr:
     if row[1] == 0:
         continue
-    time.append(row[0])
     open.append(row[1])
     close.append(row[2])
     high.append(row[3])
     low.append(row[4])
+    # 6 hours: time is utc. EDT = -4, but finplot converses to local ams (+2) time and I cannot disable this.
+    time.append(datetime.utcfromtimestamp(row[0] - 6 * 3600))
 
 if len(open) == 0:
     print("No data.")
     exit(0)
 
-stock_prices = pd.DataFrame({'open': open , 'close': close , 'high': high,  'low': low },
-                            index=pd.date_range("2024-05-14", periods=len(open), freq="d"))
+stock_prices = pd.DataFrame({'datetime': time, 'open': open, 'close': close, 'high': high, 'low': low})
+stock_prices = stock_prices.set_index('datetime')
 
 buy_time = []
 sell_time = []
@@ -46,16 +50,17 @@ sell_time = []
 csr.execute("SELECT buy_time, sell_time FROM positions WHERE ticker = '" + ticker + "'")
 
 for row in csr:
-    buy_time.append(row[0])
-    sell_time.append(row[1])
+    buy_time.append(datetime.utcfromtimestamp(row[0] - 6 * 3600))
+    sell_time.append(datetime.utcfromtimestamp(row[0] - 6 * 3600))
 
 conn.close()
 
-positions = pd.DataFrame({'buy_time': buy_time , 'sell_time': sell_time })
-                            #index=pd.date_range("2024-05-14", periods=len(open), freq="d"))
+positions = pd.DataFrame({'buy_time': buy_time, 'sell_time': sell_time})
 
-print(stock_prices)
 print(positions)
 
+conn.close()
+
+print(stock_prices)
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
 fplt.show()
