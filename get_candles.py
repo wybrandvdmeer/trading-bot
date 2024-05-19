@@ -52,6 +52,8 @@ if len(open) == 0:
 stock_prices = pd.DataFrame({'datetime': time, 'open': open, 'close': close, 'high': high, 'low': low})
 stock_prices = stock_prices.set_index('datetime')
 
+max_open = stock_prices['open'].max()
+
 dates = []
 for d in stock_prices.index:
     dates.append(d)
@@ -76,15 +78,16 @@ conn.close()
 positions = pd.DataFrame({'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 'sell_price': sell_price, 'no_of_stocks': no_of_stocks})
 positions['gain'] = positions['no_of_stocks'] * (positions['sell_price'] - positions['buy_price'])
 gain = positions['gain'].sum()
+no_of_stocks = positions['no_of_stocks'].sum()
+no_of_trades = len(positions.index)
 positions.reset_index()
-
-print(positions)
-print("GAIN: " + str(gain))
 
 fplt.plot(mac_d, ax=ax2, legend='MACD')
 fplt.plot(signal, ax=ax2, legend='Signal')
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
-fplt.add_text((time[100], 2 * open[100]), "GAIN: " + str(gain), color='#bb7700', ax=ax)
+
+txt = "Gain: " + str(gain) + '\nTotal no of stocks: ' + str(no_of_stocks) + '\nTotal no of trades: ' + str(no_of_trades)
+fplt.add_text((time[10], max_open), txt, color='#bb7700', ax=ax)
 
 for index, row in positions.iterrows():
     x1 = row['buy_time']
