@@ -139,11 +139,15 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 	macd * m = ind.calculate_macd(candles);
 
 	candle * current = get_valid_candle(candles, 0);
-	candle * previous = get_valid_candle(candles, 1);
+
+	/* Skip non valid candle. W'll store it when a valid candle comes along. */
+	if(!current->is_valid()) {
+		log.log("Received a non valid candle.");
+		return;
+	}
 
 	float open_0 = current->open;
 	float close_0 = current->close;
-	float close_1 = previous->close;
 
 	/* We are only trading if stock is below 20 dollar. 
 	*/
@@ -230,7 +234,7 @@ void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd
 	}
 	
 	for(auto c : *candles)  {
-			delete c;
+		delete c;
 	}
 
 	delete candles;
@@ -243,7 +247,7 @@ candle * tradingbot::get_valid_candle(std::vector<candle*> * candles, int positi
 	int idx = candles->size() - 1 - position;
 	while(idx >= 0) {
 		c = candles->at(idx);
-		if(c->open > 0 && c->close > 0) {
+		if(c->is_valid()) {
 			return c;
 		}
 		idx--;
@@ -303,7 +307,7 @@ void tradingbot::sell(position *p) {
 bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 	float non_valid_candles=0;
 	for(auto c : *candles) {
-		if(c->open == 0 || c->close == 0) {
+		if(!c->is_valid()) {
 			non_valid_candles++;
 		}
 	}

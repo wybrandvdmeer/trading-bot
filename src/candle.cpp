@@ -18,3 +18,7 @@ candle::candle(
 	candle::adjustedClose = adjustedClose;
 	candle::volume = volume;
 }
+
+bool candle::is_valid() {
+	return open > 0 && close > 0;
+}

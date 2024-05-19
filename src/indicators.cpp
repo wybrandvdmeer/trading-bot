@@ -46,7 +46,7 @@ std::vector<float> indicators::calculate_ema(int noOfDays, std::vector<candle*> 
 		candle * c = *it;
 
 		close = c->close;
-		if(close == 0) {
+		if(!c->is_valid()) {
 			close = prv_close;
 		}
 
@@ -71,7 +71,7 @@ float indicators::calculate_sma(int noOfDays, std::vector<candle*> * candles, in
 
 		candle * c = *it;
 
-		if(c->close == 0) {
+		if(!c->is_valid()) {
 			close = prv_close;
 		} else {
 			close = c->close;
