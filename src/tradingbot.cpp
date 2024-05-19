@@ -220,7 +220,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	if(close_0 <= sma_200) {
 		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200);
 	} else
-	if(m->get_macd(0) <= m->get_signal(0)) {
+	if(m->get_macd(0) <= m->get_signal(0) + 0.1) {
 		log.log("no trade: macd(%f) is smaller then signal (%f).", m->get_macd(0), m->get_signal(0));
 	} else {
 		/* In case of back-testing, the candle time is leading. 
@@ -329,8 +329,6 @@ bool tradingbot::candle_in_nse_closing_window(candle * c) {
 
 	long ts = timegm(tm_struct)%(24 * 3600);
 	long ts_candle = (c->time)%(24 * 3600);
-
-log.log("%ld - %ld - %ld", ts, ts_candle, ts + 15 * 60); 
 
 	return ts <= ts_candle && ts_candle < ts + 15 * 60;
 }
