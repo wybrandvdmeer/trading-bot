@@ -86,6 +86,8 @@ fplt.plot(mac_d, ax=ax2, legend='MACD')
 fplt.plot(signal, ax=ax2, legend='Signal')
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
 
+print(positions)
+
 txt = "Gain: " + str(gain) + '\nTotal no of stocks: ' + str(no_of_stocks) + '\nTotal no of trades: ' + str(no_of_trades)
 fplt.add_text((time[10], max_open), txt, color='#bb7700', ax=ax)
 
@@ -96,6 +98,9 @@ for index, row in positions.iterrows():
     y2 = row['sell_price']
 
     line = fplt.add_line((x1, y1), (x2, y2), color='#9900ff', interactive=True)
+
+    txt = 'buy: ' + str(y1) + ' sell: ' + str(y2) + ' gain/stock: ' + "{:.2f}".format(y2 - y1)
+    fplt.add_text((x1, y1), txt, color='#bd7700', ax=ax)
 
 conn.close()
 
