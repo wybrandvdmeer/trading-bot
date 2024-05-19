@@ -135,16 +135,17 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 		return;
 	}
 
-	sma_200 = calc_sma_200(candles);
-	macd * m = ind.calculate_macd(candles);
+	candle * current = candles->at(candles->size() - 1);
 
-	candle * current = get_valid_candle(candles, 0);
-
-	/* Skip non valid candle. W'll store it when a valid candle comes along. */
+	/* Skip non valid candle. W'll store it when a valid candle comes along. 
+	*/
 	if(!current->is_valid()) {
 		log.log("Received a non valid candle.");
 		return;
 	}
+
+	sma_200 = calc_sma_200(candles);
+	macd * m = ind.calculate_macd(candles);
 
 	float open_0 = current->open;
 	float close_0 = current->close;
@@ -240,19 +241,6 @@ void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd
 	delete candles;
 
 	delete m;
-}
-
-candle * tradingbot::get_valid_candle(std::vector<candle*> * candles, int position) {
-	candle *c=NULL;
-	int idx = candles->size() - 1 - position;
-	while(idx >= 0) {
-		c = candles->at(idx);
-		if(c->is_valid()) {
-			return c;
-		}
-		idx--;
-	}
-	return NULL;
 }
 
 void tradingbot::buy(std::string ticker, float stock_price, long buy_time) {

@@ -37,7 +37,7 @@ float indicators::calculate_ema(int noOfDays, std::vector<candle*> * candles, in
 
 std::vector<float> indicators::calculate_ema(int noOfDays, std::vector<candle*> * candles) {
 	float alpha = 2/((float)noOfDays + 1);
-	float close, prv_close=0, ema = 0;
+	float ema = 0;
 
 	vector<float> emas;
 
@@ -45,24 +45,24 @@ std::vector<float> indicators::calculate_ema(int noOfDays, std::vector<candle*> 
 	for(it = candles->begin(); it != candles->end(); it++) {
 		candle * c = *it;
 
-		close = c->close;
 		if(!c->is_valid()) {
-			close = prv_close;
+			/* To keep the macd vector the same size as the candle vector ie for every candle
+			there is a macd. 
+			*/
+			emas.push_back(emas.size() > 0 ? emas.at(emas.size() - 1) : 0);
+			continue;
 		}
 
 		ema = c->close * alpha + (1 - alpha) * ema;
 
 		emas.push_back(ema);
-
-		prv_close = close;
 	}
 	return emas;
 }
 
 float indicators::calculate_sma(int noOfDays, std::vector<candle*> * candles, int offset) {
-
 	int idx=0;
-	float prv_close=0, close, sma=0;
+	float close, sma=0;
 
 	for(vector<candle*>::reverse_iterator it = candles->rbegin(); it != candles->rend(); ++it) {
 		if(idx >= noOfDays + offset) {
@@ -72,18 +72,14 @@ float indicators::calculate_sma(int noOfDays, std::vector<candle*> * candles, in
 		candle * c = *it;
 
 		if(!c->is_valid()) {
-			close = prv_close;
-		} else {
-			close = c->close;
-		}
-
+			continue;
+		} 
+	
 		if(idx >= offset) {
-			sma += close;
+			sma += c->close;
 		}
 
 		idx++;
-
-		prv_close = close;
 	}
 
 	return sma /= noOfDays;

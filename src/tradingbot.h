@@ -27,7 +27,6 @@ private:
 	bool nse_is_open();
 	void buy(std::string ticker, float stock_price, long buy_time);
 	void sell(position * p);
-	candle * get_valid_candle(std::vector<candle*> * candles, int position);
 	bool get_quality_candles(std::vector<candle*> *candles);
 	void finish(std::string ticker, std::vector<candle*> *candles, macd *m, float sma_200);
 	float calc_sma_200(std::vector<candle*> * candles);
