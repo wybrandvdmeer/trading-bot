@@ -84,7 +84,9 @@ void tradingbot::trade(int top_gainers_idx) {
 			for(int idx2=0; idx2 < idx; idx2++) {
 				v->push_back(candles->at(idx2));
 			}
-			trade(v);
+			if(trade(v)) {
+				break;
+			}
 		}
 
 		return;
@@ -110,29 +112,34 @@ void tradingbot::trade(int top_gainers_idx) {
 			tradingbot::ticker = top_gainers->at(top_gainers_idx);
         }
 
+		bool finished_for_the_day = false;
 		if(!ticker.empty()) {
 			db.ticker = ticker;
 			db.create_schema();
 	
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, "1m", "2d");
 			if(candles != NULL) {
-				trade(candles);
+				finished_for_the_day = trade(candles);
 			} else {
 				log.log("No candles received");
 			}
 		}
-		
-		std::this_thread::sleep_for(std::chrono::milliseconds(60 * 1000));
+
+		if(finished_for_the_day) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(60 * 60 * 1000));
+		} else {
+			std::this_thread::sleep_for(std::chrono::milliseconds(60 * 1000));
+		}
 	}
 }
 
 
-void tradingbot::trade(std::vector<candle*> *candles) {
+bool tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("\nEvaluating %s", ticker.c_str());
 
 	if(!get_quality_candles(candles)) {
 		log.log("\nQuality candles too low.");
-		return;
+		return false;
 	}
 
 	candle * current = candles->at(candles->size() - 1);
@@ -141,7 +148,7 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 	*/
 	if(!current->is_valid()) {
 		log.log("Received a non valid candle.");
-		return;
+		return false;
 	}
 
 	sma_200 = calc_sma_200(candles);
@@ -164,10 +171,17 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 		m->get_macd(0),
 		m->get_signal(0),
 		ind.calculate_ema(20, candles, 0));
+
+	bool finished_for_the_day=false;
 	
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
+		if(candle_in_nse_closing_window(current) ) {
+			log.log("sell: current candle is in closing window. Trading day is finished.");
+			bSell = true;
+			finished_for_the_day=true;
+		} else
 		if(m->get_macd(0) <= m->get_signal(0)) {
 			p->stop_loss_activated = 0;
 			log.log("sell: macd (%f) is below signal (%f)." ,
@@ -201,7 +215,7 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 		}
 
 		finish(ticker, candles, m, sma_200);
-		return;
+		return finished_for_the_day;
 	}
 
 	if(close_0 <= sma_200) {
@@ -220,6 +234,7 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 	}
 
 	finish(ticker, candles, m, sma_200);
+	return false;
 }
 
 void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd * m, float sma_200) {
@@ -305,9 +320,27 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 	return quality >= 0.9;
 }
 
+bool tradingbot::candle_in_nse_closing_window(candle * c) {
+	time_t now = time(NULL);
+	struct tm *tm_struct = gmtime(&now);
+
+	if(tm_struct->tm_wday == 0 || tm_struct->tm_wday >= 6) {
+		return false;
+	}
+
+	tm_struct->tm_hour = 15;
+	tm_struct->tm_min = 45;
+	tm_struct->tm_sec = 0;
+
+	long ts = timegm(tm_struct)%(24 * 3600);
+	long ts_candle = (c->time)%(24 * 3600);
+
+	return ts <= ts_candle && ts_candle < ts + 15 * 60;
+}
+
 bool tradingbot::nse_is_open() {
 	time_t now = time(NULL);
-	struct tm *tm_struct = localtime(&now);
+	struct tm *tm_struct = gmtime(&now);
 
 	if(tm_struct->tm_wday == 0 || tm_struct->tm_wday >= 6) {
 		return false;
@@ -316,8 +349,8 @@ bool tradingbot::nse_is_open() {
 	int hour = tm_struct->tm_hour;
 	int minutes = tm_struct->tm_min;
 
-	if(hour >= 15 && hour < 22) {
-		if(hour == 15 && minutes <= 30) {
+	if(hour >= 13 && hour < 20) {
+		if(hour == 13 && minutes <= 30) {
 			return false;
 		}
 		return true;

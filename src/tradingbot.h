@@ -23,13 +23,14 @@ private:
 	logger log;
 	alpaca_api alpaca;
 	top_gainers tg;
-	void trade(std::vector<candle*> * candles);
+	bool trade(std::vector<candle*> * candles);
 	bool nse_is_open();
 	void buy(std::string ticker, float stock_price, long buy_time);
 	void sell(position * p);
 	bool get_quality_candles(std::vector<candle*> *candles);
 	void finish(std::string ticker, std::vector<candle*> *candles, macd *m, float sma_200);
-	float calc_sma_200(std::vector<candle*> * candles);
+	float calc_sma_200(std::vector<candle*> *candles);
+	bool candle_in_nse_closing_window(candle *c);
 };
 
 #endif
