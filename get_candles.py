@@ -12,7 +12,8 @@ if len(sys.argv) > 2:
     days = int(sys.argv[2])
 
 dt = datetime.today() - timedelta(days=days)
-db_file = 'file:/db-files/' + ticker + '-' + dt.strftime('%Y%m%d') + '.db?mode=ro'
+date_string = dt.strftime('%Y%m%d')
+db_file = 'file:/db-files/' + ticker + '-' + date_string + '.db?mode=ro'
 print("DB-file: " + db_file)
 conn = sqlite3.connect(db_file, uri=True)
 
@@ -30,7 +31,7 @@ sma_200 = []
 
 fplt.display_timezone = gettz('US/Eastern')
 
-ax, ax2 = fplt.create_plot('S&P 500 MACD', rows=2)
+ax, ax2 = fplt.create_plot(ticker + '-' + date_string, rows=2)
 
 for row in csr:
     if row[1] == 0:
@@ -59,23 +60,31 @@ buy_time = []
 sell_time = []
 buy_price = []
 sell_price = []
+no_of_stocks = []
 
-csr.execute("SELECT buy_time, sell_time, stock_price, sell_price FROM positions WHERE ticker = '" + ticker + "'")
+csr.execute("SELECT buy_time, sell_time, stock_price, sell_price, no_of_stocks FROM positions WHERE ticker = '" + ticker + "'")
 
 for row in csr:
     buy_time.append(datetime.utcfromtimestamp(row[0]))
     sell_time.append(datetime.utcfromtimestamp(row[1]))
     buy_price.append(row[2])
     sell_price.append(row[3])
+    no_of_stocks.append(row[4])
 
 conn.close()
+
+positions = pd.DataFrame({'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 'sell_price': sell_price, 'no_of_stocks': no_of_stocks})
+positions['gain'] = positions['no_of_stocks'] * (positions['sell_price'] - positions['buy_price'])
+gain = positions['gain'].sum()
+positions.reset_index()
+
+print(positions)
+print("GAIN: " + str(gain))
 
 fplt.plot(mac_d, ax=ax2, legend='MACD')
 fplt.plot(signal, ax=ax2, legend='Signal')
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
-
-positions = pd.DataFrame({'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 'sell_price': sell_price})
-positions.reset_index()
+fplt.add_text((time[100], 2 * open[100]), "GAIN: " + str(gain), color='#bb7700', ax=ax)
 
 for index, row in positions.iterrows():
     x1 = row['buy_time']
