@@ -207,9 +207,6 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 	if(close_0 <= sma_200) {
 		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200);
 	} else
-	if(m->get_macd(0) <= 0) {
-		log.log("no trade: macd(%f) is smaller then 0.", m->get_macd(0));
-	} else
 	if(m->get_macd(0) <= m->get_signal(0)) {
 		log.log("no trade: macd(%f) is smaller then signal (%f).", m->get_macd(0), m->get_signal(0));
 	} else {
