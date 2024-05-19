@@ -70,7 +70,7 @@ void tradingbot::trade(int top_gainers_idx) {
 		*/
 		int idx=0, day_break_position=-1, first_day, prv_day=-1;
 		for(auto c : *candles) {
-			first_day = localtime(&(c->time))->tm_wday;
+			first_day = gmtime(&(c->time))->tm_wday;
 			if(prv_day == -1) {
 				prv_day = first_day;
 			} else
@@ -81,7 +81,7 @@ void tradingbot::trade(int top_gainers_idx) {
 			idx++;
 		}
 
-		for(idx=day_break_position; idx < candles->size(); idx++) {
+		for(idx=day_break_position + 1; idx < candles->size(); idx++) {
 			std::vector<candle*> * v = new std::vector<candle*>();
 			for(int idx2=0; idx2 < idx; idx2++) {
 				v->push_back(candles->at(idx2));
@@ -353,4 +353,18 @@ bool tradingbot::nse_is_open() {
 		return true;
 	}
 	return false;
+}
+
+std::string tradingbot::date_to_string(long ts) {
+	ts = ts - 4 * 3600;
+	struct tm *t = gmtime(&ts);
+	char buf[100];
+	sprintf(buf, "%d-%02d-%02d %02d:%02d:%02d", 
+		t->tm_year + 1900, 
+		t->tm_mon + 1, 
+		t->tm_mday, 
+		t->tm_hour, 
+		t->tm_min, 
+		t->tm_sec);
+	return std::string(buf);
 }

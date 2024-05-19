@@ -31,6 +31,7 @@ private:
 	void finish(std::string ticker, std::vector<candle*> *candles, macd *m, float sma_200);
 	float calc_sma_200(std::vector<candle*> *candles);
 	bool candle_in_nse_closing_window(candle *c);
+	std::string date_to_string(long ts);
 };
 
 #endif
