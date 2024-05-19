@@ -14,6 +14,8 @@
 
 using namespace std;
 
+#define MACD_SIGNAL_DIFFERENCE 0.005
+
 /* 
 Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na bijv de 1e pull back.
 Trendfollowing: Identificeer op dag basis een trend en stap dan in aan het begin vd trend op basis
@@ -220,7 +222,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	if(close_0 <= sma_200) {
 		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200);
 	} else
-	if(m->get_macd(0) <= m->get_signal(0) + 0.1) {
+	if(m->get_macd(0) <= m->get_signal(0) + MACD_SIGNAL_DIFFERENCE) {
 		log.log("no trade: macd(%f) is smaller then signal (%f).", m->get_macd(0), m->get_signal(0));
 	} else {
 		/* In case of back-testing, the candle time is leading. 
