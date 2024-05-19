@@ -259,6 +259,10 @@ void db_api::close(sqlite3_stmt * statement) {
 }
 
 void db_api::execDml(std::string sql) {
+	execDml(sql, false);
+}
+
+void db_api::execDml(std::string sql, bool ignore_error) {
 	if(debug) {
 		log.log("%s", sql.c_str());
 	}
@@ -267,7 +271,9 @@ void db_api::execDml(std::string sql) {
 
     if(sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL) != SQLITE_OK) {
         printf("ERROR: while compiling sql: %s\n", sqlite3_errmsg(db));
-		exit(1);
+		if(!ignore_error) {
+			exit(1);
+		}
     }
 
     sqlite3_step(stmt);
@@ -280,10 +286,10 @@ void db_api::create_schema() {
 	open();
 	execDml("CREATE TABLE positions (id INTEGER NOT NULL, ticker VARCHAR(10), buy_time INTEGER , \
 		sell_time INTEGER, no_of_stocks INTEGER, stock_price REAL, sell_price REAL, \
-		sell_off_price REAL, loss_limit_price REAL, stop_loss_activated INTEGER)");
+		sell_off_price REAL, loss_limit_price REAL, stop_loss_activated INTEGER)", true);
 	open();
 	execDml("CREATE TABLE candles (ticker VARCHAR(10), time INTEGER, open REAL, close REAL, low REAL, \
-			 high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL)");
+			 high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL)", true);
 }
 
 sqlite3_stmt * db_api::prepare(std::string sql) {

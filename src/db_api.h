@@ -29,6 +29,7 @@ private:
 	void open();
 	void open(std::string db_file);
 	void execDml(std::string sql);
+	void execDml(std::string sql, bool ignore_error);
 	void close();
 	void close(sqlite3_stmt * statement);
 	float selectFloat(sqlite3_stmt * statement, int column);
