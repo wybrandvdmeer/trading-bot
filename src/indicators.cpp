@@ -23,6 +23,13 @@ macd * indicators::calculate_macd(std::vector<candle*> * candles) {
 		float macd = m->ema_12.at(idx) - m->ema_26.at(idx);
 		m->macd.push_back(macd);
 
+		/* If corresponding candle is not valid, then we skip its signal value.
+		*/
+		if(!candles->at(idx)->is_valid()) {
+			m->signal.push_back(ema);
+			continue;
+		}
+
 		ema = macd * alpha + (1 - alpha) * ema;
 		m->signal.push_back(ema);
 	}
@@ -47,7 +54,7 @@ std::vector<float> indicators::calculate_ema(int noOfDays, std::vector<candle*> 
 
 		if(!c->is_valid()) {
 			/* To keep the macd vector the same size as the candle vector ie for every candle
-			there is a macd. 
+			there is a macd which is non valid. 
 			*/
 			emas.push_back(emas.size() > 0 ? emas.at(emas.size() - 1) : 0);
 			continue;
