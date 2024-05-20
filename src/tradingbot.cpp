@@ -40,6 +40,7 @@ tradingbot::tradingbot() {
 	tradingbot::force = false;
 	tradingbot::debug = false;
 	tradingbot::disable_alpaca = false;
+	tradingbot::prv_macd_signal_diff = -1;
 }
 
 /*
@@ -138,7 +139,8 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 
 	candle * current = candles->at(candles->size() - 1);
 
-	/* Skip non valid candle. W'll store it when a valid candle comes along. 
+	/* Skip non valid candle. 
+	W'll store it when a valid candle comes along. 
 	*/
 	if(!current->is_valid()) {
 		log.log("Received a non valid candle.");
@@ -159,11 +161,19 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		m->get_signal(0),
 		ind.calculate_ema(20, candles, 0));
 
-	bool finished_for_the_day = candle_in_nse_forex_closing_window(current);
+	bool finished_for_the_day = 
+		candle_in_nse_forex_closing_window(current);
 	
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
+		if(prv_macd_signal_diff != -1 && 
+			m->get_macd(0) < prv_macd_signal_diff) {
+			log.log("sell: prv macd/signal diff (%f) is greater then macd(%f).",
+			prv_macd_signal_diff,
+			m->get_macd(0));
+			bSell = true;
+		} else
 		if(finished_for_the_day) {
 			log.log("sell: current candle is in closing window. Trading day is finished.");
 			bSell = true;
@@ -199,7 +209,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 			}
 			sell(p);
 		}
-
+		
 		finish(ticker, candles, m, sma_200);
 		return finished_for_the_day;
 	}
@@ -225,6 +235,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 
 void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd * m, float sma_200) {
 	db.insert_candles(ticker, candles, m, sma_200);
+	tradingbot::prv_macd_signal_diff = m->get_macd(0);
 
 	/* When backtesting, dont throw away the candles. 
 	*/

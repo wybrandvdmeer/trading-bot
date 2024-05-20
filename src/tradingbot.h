@@ -15,6 +15,7 @@ public:
 	void trade();
 	bool force, debug, disable_alpaca;
 private:
+	float prv_macd_signal_diff;
 	float sma_200;
 	yahoo_api yahoo;
 	db_api db;
