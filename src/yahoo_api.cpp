@@ -63,7 +63,7 @@ std::vector<candle*>* yahoo_api::stockPrices(
 	std::string interval, 
 	std::string range) {
 	std::string url = "https://query2.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=" + range 
-		+ "&interval=" + interval + "&includePrePost=False&events=div%2Csplits%2CcapitalGains";
+		+ "&interval=" + interval + "&includePrePost=True&events=div%2Csplits%2CcapitalGains";
 
 	std::string response = dl.request(url);
 	if(yahoo_api::debug) {

@@ -6,7 +6,6 @@
 #include <ctime>
 
 #include "logger.h"
-#include "top_gainers.h"
 #include "tradingbot.h"
 
 using namespace std;
@@ -46,11 +45,6 @@ int main(int argc, char ** argv) {
 		t.db_file = std::string(db_file);
 	}
 
-	char *tgp = getOptionValue(argv, argv + argc, "--top-gainer-position");
-	if(tgp != NULL) {
-		top_gainer_position = atoi(tgp);
-	}
-
 	char *forceOption = getOption(argv, argv + argc, "--force");
 	if(forceOption != NULL) {
 		t.force = true;
@@ -66,5 +60,5 @@ int main(int argc, char ** argv) {
 		t.disable_alpaca = true;
 	}
 
-	t.trade(top_gainer_position);
+	t.trade(ticker);
 }
