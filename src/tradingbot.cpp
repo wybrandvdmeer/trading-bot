@@ -14,7 +14,7 @@
 
 using namespace std;
 
-#define CANDLE_RANGE 	"3d"
+#define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
 #define MACD_SIGNAL_DIFFERENCE 0.005
 
