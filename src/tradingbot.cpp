@@ -48,7 +48,7 @@ macd scalping strategy nog te programmeren:
 3> risico analyze 
 */
 
-void tradingbot::trade(std::string ticker) {
+void tradingbot::trade() {
 	tradingbot::ticker = ticker;
 
 	if(debug) {

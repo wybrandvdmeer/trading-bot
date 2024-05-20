@@ -12,7 +12,7 @@ class tradingbot {
 public:
 	tradingbot();
 	std::string ticker, db_file;
-	void trade(std::string ticker);
+	void trade();
 	bool force, debug, disable_alpaca;
 private:
 	float sma_200;

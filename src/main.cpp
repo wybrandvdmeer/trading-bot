@@ -30,7 +30,6 @@ char* getOptionValue(char ** begin, char ** end, const std::string & option) {
 
 int main(int argc, char ** argv) {
 	logger log;
-	int top_gainer_position = 0;
 	tradingbot t;
 			
 	log.log("Starting bot.");
@@ -60,5 +59,8 @@ int main(int argc, char ** argv) {
 		t.disable_alpaca = true;
 	}
 
-	t.trade(ticker);
+	if(ticker != NULL) {
+		t.ticker = ticker;
+	}
+	t.trade();
 }
