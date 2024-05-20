@@ -18,7 +18,7 @@ print("DB-file: " + db_file)
 conn = sqlite3.connect(db_file, uri=True)
 
 csr = conn.cursor()
-csr.execute("SELECT time, open, close, high, low, macd, signal, sma_200 FROM candles WHERE ticker = '" + ticker + "'")
+csr.execute("SELECT time, open, close, high, low, macd, signal, sma_200 FROM candles WHERE ticker = '" + ticker + "' ORDER BY time")
 
 time = []
 open = []
@@ -64,7 +64,7 @@ buy_price = []
 sell_price = []
 no_of_stocks = []
 
-csr.execute("SELECT buy_time, sell_time, stock_price, sell_price, no_of_stocks FROM positions WHERE ticker = '" + ticker + "'")
+csr.execute("SELECT buy_time, sell_time, stock_price, sell_price, no_of_stocks FROM positions WHERE ticker = '" + ticker + "' AND sell_price IS NOT NULL")
 
 for row in csr:
     buy_time.append(datetime.utcfromtimestamp(row[0]))
