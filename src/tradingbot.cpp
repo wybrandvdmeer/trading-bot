@@ -15,8 +15,9 @@
 using namespace std;
 
 #define CANDLE_RANGE 	"2d"
-#define CANDLE_INTERVAL "1m"
-#define MACD_SIGNAL_DIFFERENCE 0.005
+#define CANDLE_INTERVAL "2m"
+#define MACD_SIGNAL_DIFFERENCE 0.0
+#define SMA_200_DIFFERENCE 0.1
 
 /* 
 Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na bijv de 1e pull back.
@@ -203,8 +204,8 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		return finished_for_the_day;
 	}
 
-	if(close_0 <= sma_200) {
-		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200);
+	if(close_0 < sma_200 + SMA_200_DIFFERENCE) {
+		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200 + SMA_200_DIFFERENCE);
 	} else
 	if(m->get_macd(0) <= m->get_signal(0) + MACD_SIGNAL_DIFFERENCE) {
 		log.log("no trade: macd(%f) is smaller then signal (%f).", m->get_macd(0), m->get_signal(0));

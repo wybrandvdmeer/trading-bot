@@ -49,6 +49,16 @@ if len(open) == 0:
     print("No data.")
     exit(0)
 
+#
+# sma-200 is only filed in the candles which were involved in the simulation.
+#
+
+sma_200 = [x for x in sma_200 if x is not None]
+
+init_value = sma_200[0]
+for i in range(0, len(open) - len(sma_200)):
+    sma_200.insert(0, init_value)
+
 stock_prices = pd.DataFrame({'datetime': time, 'open': open, 'close': close, 'high': high, 'low': low})
 stock_prices = stock_prices.set_index('datetime')
 
@@ -85,6 +95,7 @@ positions.reset_index()
 fplt.plot(mac_d, ax=ax2, legend='MACD')
 fplt.plot(signal, ax=ax2, legend='Signal')
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
+fplt.plot(sma_200, ax=ax, legend='SMA-200')
 
 print(positions)
 
