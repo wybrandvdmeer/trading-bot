@@ -25,6 +25,7 @@ public:
 	bool debug;
 	std::string ticker;
 private:
+	long max_candle_time;
 	sqlite3 * db;
 	void open();
 	void open(std::string db_file);

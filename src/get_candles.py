@@ -63,6 +63,8 @@ stock_prices = pd.DataFrame({'datetime': time, 'open': open, 'close': close, 'hi
 stock_prices = stock_prices.set_index('datetime')
 
 max_open = stock_prices['open'].max()
+min_open = stock_prices['open'].min()
+max_open -= ((max_open - min_open)/4)
 
 dates = []
 for d in stock_prices.index:

@@ -30,9 +30,9 @@ private:
 	void buy(std::string ticker, float stock_price, long buy_time);
 	void sell(position * p);
 	bool get_quality_candles(std::vector<candle*> *candles);
-	void finish(std::string ticker, std::vector<candle*> *candles, macd *m, float sma_200);
-	float calc_sma_200(std::vector<candle*> *candles);
+	void finish(std::string ticker, std::vector<candle*> *candles, float sma_200);
 	std::string date_to_string(long ts);
+	void ema_test();
 };
 
 #endif

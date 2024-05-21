@@ -15,9 +15,9 @@
 using namespace std;
 
 #define CANDLE_RANGE 	"2d"
-#define CANDLE_INTERVAL "2m"
-#define MACD_SIGNAL_DIFFERENCE 0.0
-#define SMA_200_DIFFERENCE 0.1
+#define CANDLE_INTERVAL "5m"
+#define MACD_SIGNAL_DIFFERENCE 0.00002
+#define SMA_200_DIFFERENCE 0.0002
 
 /* 
 Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na bijv de 1e pull back.
@@ -152,8 +152,18 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		return false;
 	}
 
-	sma_200 = calc_sma_200(candles);
-	macd * m = ind.calculate_macd(candles);
+	std::vector<float> close_prices;
+	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end();) {
+		if((*it)->is_valid()) {
+			close_prices.push_back((*it)->close);
+			it++;
+		} else {
+			candles->erase(it);
+		}
+	}
+
+	sma_200 = ind.calculate_sma(200, close_prices);
+	ind.calculate_macd(close_prices);
 
 	float open_0 = current->open;
 	float close_0 = current->close;
@@ -162,9 +172,9 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		open_0, 
 		close_0,
 		sma_200,
-		m->get_macd(0),
-		m->get_signal(0),
-		ind.calculate_ema(20, candles, 0));
+		ind.m.get_macd(0),
+		ind.m.get_signal(0),
+		ind.calculate_ema(20, close_prices));
 
 	bool finished_for_the_day = 
 		candle_in_nse_closing_window(current);
@@ -173,20 +183,20 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	if(p != NULL) {
 		bool bSell = false;
 		if(prv_macd_signal_diff != -1 && 
-			m->get_macd(0) < prv_macd_signal_diff) {
+			ind.m.get_macd(0) < prv_macd_signal_diff) {
 			log.log("sell: prv macd/signal diff (%f) is greater then macd(%f).",
 			prv_macd_signal_diff,
-			m->get_macd(0));
+			ind.m.get_macd(0));
 			bSell = true;
 		} else
 		if(finished_for_the_day) {
 			log.log("sell: current candle is in closing window. Trading day is finished.");
 			bSell = true;
 		} else
-		if(m->get_macd(0) <= m->get_signal(0)) {
+		if(ind.m.get_macd(0) <= ind.m.get_signal(0)) {
 			p->stop_loss_activated = 0;
 			log.log("sell: macd (%f) is below signal (%f)." ,
-				m->get_macd(0) , m->get_signal(0));
+				ind.m.get_macd(0) , ind.m.get_signal(0));
 			bSell = true;
 		} else
 		if(close_0 >= p->sell_off_price) {
@@ -215,15 +225,16 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 			sell(p);
 		}
 		
-		finish(ticker, candles, m, sma_200);
+		finish(ticker, candles, sma_200);
 		return finished_for_the_day;
 	}
 
 	if(close_0 < sma_200 + SMA_200_DIFFERENCE) {
 		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200 + SMA_200_DIFFERENCE);
 	} else
-	if(m->get_macd(0) <= m->get_signal(0) + MACD_SIGNAL_DIFFERENCE) {
-		log.log("no trade: macd(%f) is smaller then signal (%f).", m->get_macd(0), m->get_signal(0));
+	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + MACD_SIGNAL_DIFFERENCE) {
+		log.log("no trade: macd(%f) is smaller then signal (%f).", 
+			ind.m.get_macd(0), ind.m.get_signal(0));
 	} else {
 		/* In case of back-testing, the candle time is leading. 
 		*/
@@ -234,13 +245,13 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		}
 	}
 
-	finish(ticker, candles, m, sma_200);
+	finish(ticker, candles, sma_200);
 	return false;
 }
 
-void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd * m, float sma_200) {
-	db.insert_candles(ticker, candles, m, sma_200);
-	tradingbot::prv_macd_signal_diff = m->get_macd(0);
+void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, float sma_200) {
+	db.insert_candles(ticker, candles, &ind.m, sma_200);
+	tradingbot::prv_macd_signal_diff = ind.m.get_macd(0);
 
 	/* When backtesting, dont throw away the candles. 
 	*/
@@ -254,13 +265,13 @@ void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, macd
 
 	delete candles;
 
-	delete m;
+	log.log("Finished finished()");
 }
 
 void tradingbot::buy(std::string ticker, float stock_price, long buy_time) {
 	position p;
 	p.ticker = ticker;
-	p.no_of_stocks = 200 / ((int)stock_price);
+	p.no_of_stocks = (int)(200.0/stock_price);
 	p.stock_price = stock_price;
 	p.buy = buy_time;
 
@@ -284,12 +295,6 @@ void tradingbot::buy(std::string ticker, float stock_price, long buy_time) {
 	if(disable_alpaca || alpaca.open_position(p)) {
 		db.open_position(p);
 	}
-}
-
-float tradingbot::calc_sma_200(std::vector<candle*> * candles) {
-	float sma_200 = ind.calculate_sma(200, candles, 0);
-	log.log("Calculated sma-200: %f", sma_200);
-	return sma_200;
 }
 
 void tradingbot::sell(position *p) {
@@ -368,4 +373,14 @@ std::string tradingbot::date_to_string(long ts) {
 		t->tm_min, 
 		t->tm_sec);
 	return std::string(buf);
+}
+
+void tradingbot::ema_test() {
+	std::vector<float> v;
+	for(int idx=0; idx < 6; idx++) {
+		v.push_back(idx);
+	}
+
+	log.log("%f", ind.calculate_ema(2, v));
+	exit(0);
 }
