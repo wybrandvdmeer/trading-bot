@@ -99,8 +99,6 @@ void tradingbot::trade() {
 			}
 		}
 
-log.log("EINDE");
-
 		return;
 	}
 
