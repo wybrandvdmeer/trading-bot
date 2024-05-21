@@ -78,8 +78,9 @@ void db_api::update_sma_200(candle *c, float sma_200) {
 void db_api::insert_candle(std::string ticker, candle *c, float macd, float signal) {	
 	open();
 	char sql[1000];
+
 	sprintf(sql, "INSERT INTO candles(ticker, time, open, close, low, high, volume, macd, signal) \
-		VALUES('%s', %ld, %f, %f, %f, %f, %ld, %f, %f)", 
+		VALUES('%s', %ld, %.16f, %.16f, %.16f, %.16f, %ld, %f, %f)", 
 		ticker.c_str(), 
 		c->time, 
 		c->open,
