@@ -92,6 +92,8 @@ void tradingbot::trade(int top_gainers_idx) {
 
 		return;
 	}
+	
+	db.create_schema();
 
 	while(true) {
         if(!tradingbot::force && !nse_is_open()) {
@@ -116,7 +118,6 @@ void tradingbot::trade(int top_gainers_idx) {
 		bool finished_for_the_day = false;
 		if(!ticker.empty()) {
 			db.ticker = ticker;
-			db.create_schema();
 	
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, CANDLE_INTERVAL, CANDLE_RANGE);
 			if(candles != NULL) {
