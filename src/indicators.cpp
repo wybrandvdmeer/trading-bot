@@ -16,7 +16,7 @@ void indicators::calculate_macd(std::vector<float> prices) {
 
 	float ema=0;
 
-	for(int idx=0; idx < m.ema_12.size(); idx++) {
+	for(int idx=m.macd.size(); idx < m.ema_12.size(); idx++) {
 		float macd = m.ema_12.at(idx) - m.ema_26.at(idx);
 		m.macd.push_back(macd);
 	}
