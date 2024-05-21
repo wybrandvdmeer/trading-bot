@@ -18,6 +18,7 @@ using namespace std;
 #define CANDLE_INTERVAL "1m"
 #define MACD_SIGNAL_DIFFERENCE 0.00002
 #define SMA_200_DIFFERENCE 0.0002
+#define OPENING_PAUSE_IN_MIN 5
 
 /* 
 Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na bijv de 1e pull back.
@@ -229,6 +230,9 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		return finished_for_the_day;
 	}
 
+	if(candle_in_openings_pause(current)) {
+		log.log("no trade: Candle is still in openings pause.");
+	} else
 	if(close_0 < sma_200 + SMA_200_DIFFERENCE) {
 		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200 + SMA_200_DIFFERENCE);
 	} else
@@ -325,6 +329,20 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 		quality, candles->size() , non_valid_candles);
 	
 	return quality >= 0.9;
+}
+
+bool tradingbot::candle_in_openings_pause(candle * c) {
+	time_t now = time(NULL);
+	struct tm *tm_struct = gmtime(&now);
+
+	tm_struct->tm_hour = 13;
+	tm_struct->tm_min = 30;
+	tm_struct->tm_sec = 0;
+
+	long ts = timegm(tm_struct)%(24 * 3600);
+	long ts_candle = (c->time)%(24 * 3600);
+
+	return ts <= ts_candle && ts_candle < ts + OPENING_PAUSE_IN_MIN * 60;
 }
 
 bool tradingbot::candle_in_nse_closing_window(candle * c) {
