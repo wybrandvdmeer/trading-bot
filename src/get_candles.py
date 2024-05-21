@@ -4,21 +4,37 @@ import sys
 import finplot as fplt
 from datetime import datetime, timedelta
 from dateutil.tz import gettz
-
-ticker = sys.argv[1].upper()
+import argparse
 
 days = 0
 if len(sys.argv) > 2:
     days = int(sys.argv[2])
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--db-file', type=str)
+parser.add_argument('--ticker', type=str)
+args = parser.parse_args()
+
+ticker = args.ticker
+if ticker is not None:
+    ticker = ticker.upper()
+
+db_file = args.db_file
 dt = datetime.today() - timedelta(days=days)
 date_string = dt.strftime('%Y%m%d')
-db_file = 'file:/db-files/' + ticker + '-' + date_string + '.db?mode=ro'
+if db_file is None:
+    db_file = 'file:/db-files/' + ticker + '-' + date_string + '.db?mode=ro'
+
 print("DB-file: " + db_file)
 conn = sqlite3.connect(db_file, uri=True)
-
 csr = conn.cursor()
-csr.execute("SELECT time, open, close, high, low, macd, signal, sma_200 FROM candles WHERE ticker = '" + ticker + "' ORDER BY time")
+
+if ticker is None:
+    csr.execute("SELECT DISTINCT ticker FROM candles")
+    ticker = csr.fetchone()[0]
+
+sql = "SELECT time, open, close, high, low, macd, signal, sma_200 FROM candles where ticker = '" + ticker + "' ORDER BY time"
+csr.execute(sql)
 
 time = []
 open = []
@@ -64,7 +80,7 @@ stock_prices = stock_prices.set_index('datetime')
 
 max_open = stock_prices['open'].max()
 min_open = stock_prices['open'].min()
-max_open -= ((max_open - min_open)/4)
+max_open -= ((max_open - min_open) / 4)
 
 dates = []
 for d in stock_prices.index:
@@ -76,7 +92,8 @@ buy_price = []
 sell_price = []
 no_of_stocks = []
 
-csr.execute("SELECT buy_time, sell_time, stock_price, sell_price, no_of_stocks FROM positions WHERE ticker = '" + ticker + "' AND sell_price IS NOT NULL")
+csr.execute(
+    "SELECT buy_time, sell_time, stock_price, sell_price, no_of_stocks FROM positions WHERE ticker = '" + ticker + "' AND sell_price IS NOT NULL")
 
 for row in csr:
     buy_time.append(datetime.utcfromtimestamp(row[0]))
@@ -87,7 +104,9 @@ for row in csr:
 
 conn.close()
 
-positions = pd.DataFrame({'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 'sell_price': sell_price, 'no_of_stocks': no_of_stocks})
+positions = pd.DataFrame(
+    {'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 'sell_price': sell_price,
+     'no_of_stocks': no_of_stocks})
 positions['gain'] = positions['no_of_stocks'] * (positions['sell_price'] - positions['buy_price'])
 gain = positions['gain'].sum()
 no_of_stocks = positions['no_of_stocks'].sum()
