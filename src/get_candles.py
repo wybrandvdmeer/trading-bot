@@ -110,7 +110,7 @@ for index, row in positions.iterrows():
 
     line = fplt.add_line((x1, y1), (x2, y2), color='#9900ff', interactive=True)
 
-    txt = 'buy: ' + str(y1) + ' sell: ' + str(y2) + ' gain/stock: ' + "{:.2f}".format(y2 - y1)
+    txt = 'buy: ' + str(y1) + ' sell: ' + str(y2) + ' gain/stock: ' + "{:.6f}".format(y2 - y1)
     fplt.add_text((x1, y1), txt, color='#bd7700', ax=ax)
 
 conn.close()
