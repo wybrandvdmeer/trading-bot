@@ -376,3 +376,13 @@ std::string tradingbot::date_to_string(long ts) {
 		t->tm_sec);
 	return std::string(buf);
 }
+
+void tradingbot::ema_test() {
+	std::vector<float> v;
+	for(int idx=0; idx < 6; idx++) {
+		v.push_back(idx);
+	}
+
+	log.log("%f", ind.calculate_ema(2, v));
+	exit(0);
+}

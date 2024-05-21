@@ -30,6 +30,7 @@ private:
 	bool get_quality_candles(std::vector<candle*> *candles);
 	void finish(std::string ticker, std::vector<candle*> *candles, float sma_200);
 	std::string date_to_string(long ts);
+	void ema_test();
 };
 
 #endif
