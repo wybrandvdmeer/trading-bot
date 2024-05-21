@@ -48,10 +48,8 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m, 
 	float sma_200) {	
 	int idx=0;
+
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end(); it++, idx++) {
-		if(!(*it)->is_valid()) {
-			continue;
-		}
 		insert_candle(ticker, *it, 
 			m->get_macd(candles->size() - 1 - idx), 
 			m->get_signal(candles->size() - 1 - idx));

@@ -150,8 +150,13 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	}
 
 	std::vector<float> close_prices;
-	for(auto c : * candles) {
-		close_prices.push_back(c->close);
+	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end();) {
+		if((*it)->is_valid()) {
+			close_prices.push_back((*it)->close);
+			it++;
+		} else {
+			candles->erase(it);
+		}
 	}
 
 	sma_200 = ind.calculate_sma(200, close_prices);
@@ -251,6 +256,7 @@ void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, floa
 	/* When backtesting, dont throw away the candles. 
 	*/
 	if(!db_file.empty()) {
+
 		return;
 	}
 	
