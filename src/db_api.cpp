@@ -14,6 +14,7 @@ using namespace std;
 db_api::db_api() {
 	debug = false;
 	read_only = false;
+	max_candle_time=0;
 }
 
 std::vector<candle*> * db_api::get_candles(std::string db_file) {
@@ -50,9 +51,13 @@ void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, 
 	int idx=0;
 
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end(); it++, idx++) {
-		insert_candle(ticker, *it, 
-			m->get_macd(candles->size() - 1 - idx), 
-			m->get_signal(candles->size() - 1 - idx));
+		if((*it)->time > max_candle_time) {
+			insert_candle(ticker, *it, 
+				m->get_macd(candles->size() - 1 - idx), 
+				m->get_signal(candles->size() - 1 - idx));
+		
+			db_api::max_candle_time = (*it)->time; 
+		}
 	}
 
 	// sma value is only calculated for the last candle.
@@ -71,10 +76,6 @@ void db_api::update_sma_200(candle *c, float sma_200) {
 }
 
 void db_api::insert_candle(std::string ticker, candle *c, float macd, float signal) {	
-	if(has_candle(ticker, c)) {
-		return;
-	}
-
 	open();
 	char sql[1000];
 	sprintf(sql, "INSERT INTO candles(ticker, time, open, close, low, high, volume, macd, signal) \
@@ -88,7 +89,7 @@ void db_api::insert_candle(std::string ticker, candle *c, float macd, float sign
 		c->volume, 
 		macd,
 		signal);
-		 
+
 	execDml(sql);
 }
 
