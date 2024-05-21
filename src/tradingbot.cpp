@@ -89,6 +89,8 @@ void tradingbot::trade() {
 			idx++;
 		}
 
+		day_break_position = 200;
+
 		for(idx=day_break_position + 1; idx < candles->size(); idx++) {
 			std::vector<candle*> * v = new std::vector<candle*>();
 			for(int idx2=0; idx2 < idx; idx2++) {
@@ -160,8 +162,6 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	}
 
 	sma_200 = ind.calculate_sma(200, close_prices);
-	log.log("Calculated sma-200: %f", sma_200);
-
 	ind.calculate_macd(close_prices);
 
 	float open_0 = current->open;
