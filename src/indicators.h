@@ -8,11 +8,12 @@
 
 class indicators {
 public:
-	macd * calculate_macd(std::vector<candle*> * candles);
-	float calculate_ema(int noOfDays, std::vector<candle*> * candles, int offset);
-	float calculate_sma(int noOfDays, std::vector<candle*> * candles, int offset);
+	macd m;
+	void calculate_macd(std::vector<float> prices);
+	float calculate_ema(int no_of_days, std::vector<float> prices);
+	float calculate_sma(int no_of_days, std::vector<float> prices);
 private:
-	std::vector<float> calculate_ema(int noOfDays, std::vector<candle*> * candles);
+	void calculate_ema(int no_of_days, std::vector<float> prices, std::vector<float> * emas);
 	logger log;
 };
 
