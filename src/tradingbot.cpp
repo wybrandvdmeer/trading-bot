@@ -43,15 +43,9 @@ tradingbot::tradingbot() {
 	tradingbot::prv_macd_signal_diff = -1;
 }
 
-/*
-macd scalping strategy nog te programmeren:
-1> top gainers
-2> visualiseren candles
-3> risico analyze 
-*/
-
-void tradingbot::trade() {
+void tradingbot::trade(int top_gainers_idx) {
 	tradingbot::ticker = ticker;
+	vector<std::string> * top_gainers=NULL;
 
 	if(debug) {
 		yahoo.debug = true;
@@ -99,7 +93,7 @@ void tradingbot::trade() {
 	}
 
 	while(true) {
-        if(!tradingbot::force && !nse_forex_is_open()) {
+        if(!tradingbot::force && !nse_is_open()) {
 			if(!ticker.empty()) {
 				ticker.erase();
 			}
@@ -107,11 +101,22 @@ void tradingbot::trade() {
             continue;
         }
 
+        if(tradingbot::ticker.empty()) {
+            top_gainers = tg.get();
+           
+            if(top_gainers->size() == 0) { 
+                cout << "No top gainers.";
+                exit(1);
+            }
+
+			tradingbot::ticker = top_gainers->at(top_gainers_idx);
+        }
+
 		bool finished_for_the_day = false;
 		if(!ticker.empty()) {
 			db.ticker = ticker;
 			db.create_schema();
-
+	
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, CANDLE_INTERVAL, CANDLE_RANGE);
 			if(candles != NULL) {
 				finished_for_the_day = trade(candles);
@@ -121,7 +126,7 @@ void tradingbot::trade() {
 		}
 
 		if(finished_for_the_day) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(8 * 60 * 60 * 1000));
+			std::this_thread::sleep_for(std::chrono::milliseconds(60 * 60 * 1000));
 		} else {
 			std::this_thread::sleep_for(std::chrono::milliseconds(60 * 1000));
 		}
@@ -162,7 +167,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		ind.calculate_ema(20, candles, 0));
 
 	bool finished_for_the_day = 
-		candle_in_nse_forex_closing_window(current);
+		candle_in_nse_closing_window(current);
 	
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
@@ -317,41 +322,38 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 	return quality >= 0.9;
 }
 
-bool tradingbot::candle_in_nse_forex_closing_window(candle * c) {
+bool tradingbot::candle_in_nse_closing_window(candle * c) {
 	time_t now = time(NULL);
-	struct tm *t = gmtime(&now);
-	
-	if(t->tm_wday != 5) {
-		return false;
-	}
+	struct tm *tm_struct = gmtime(&now);
 
-	t->tm_hour = 20;
-	t->tm_min = 50;
-	t->tm_sec = 0;
+	tm_struct->tm_hour = 19;
+	tm_struct->tm_min = 45;
+	tm_struct->tm_sec = 0;
 
-	long ts = timegm(t)%(24 * 3600);
+	long ts = timegm(tm_struct)%(24 * 3600);
 	long ts_candle = (c->time)%(24 * 3600);
 
-	return ts <= ts_candle && ts_candle < ts + 10 * 60;
+	return ts <= ts_candle && ts_candle < ts + 15 * 60;
 }
 
-bool tradingbot::nse_forex_is_open() {
+bool tradingbot::nse_is_open() {
 	time_t now = time(NULL);
-	struct tm *t = gmtime(&now);
-		
-	if(t->tm_wday == 5 && t->tm_hour > 21) {
+	struct tm *tm_struct = gmtime(&now);
+
+	if(tm_struct->tm_wday == 0 || tm_struct->tm_wday >= 6) {
 		return false;
 	}
 
-	if(t->tm_wday == 6) {
-		return false;
-	}
+	int hour = tm_struct->tm_hour;
+	int minutes = tm_struct->tm_min;
 
-	if(t->tm_wday == 0 && t->tm_hour < 5) {
-		return false;
+	if(hour >= 13 && hour < 20) {
+		if(hour == 13 && minutes <= 30) {
+			return false;
+		}
+		return true;
 	}
-
-	return true;
+	return false;
 }
 
 std::string tradingbot::date_to_string(long ts) {
