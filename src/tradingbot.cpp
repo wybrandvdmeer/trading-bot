@@ -132,7 +132,6 @@ void tradingbot::trade() {
 	}
 }
 
-
 bool tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("\nEvaluating %s", ticker.c_str());
 
@@ -144,7 +143,6 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	candle * current = candles->at(candles->size() - 1);
 
 	/* Skip non valid candle. 
-	W'll store it when a valid candle comes along. 
 	*/
 	if(!current->is_valid()) {
 		log.log("Received a non valid candle.");
