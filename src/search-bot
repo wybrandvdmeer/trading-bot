@@ -1,1 +1,1 @@
-sudo nmap -sP 192.168.2.0/24 | grep bot
+nmap -sP 192.168.2.0/24 | grep bot |sed 's/^Nmap[ a-zA-Z\-]*(\(.*\))$/\1/'
