@@ -47,6 +47,7 @@ tradingbot::tradingbot() {
 void tradingbot::trade(int top_gainers_idx) {
 	tradingbot::ticker = ticker;
 	vector<std::string> * top_gainers=NULL;
+	bool schema_created = false;
 
 	if(debug) {
 		yahoo.debug = true;
@@ -93,8 +94,6 @@ void tradingbot::trade(int top_gainers_idx) {
 		return;
 	}
 	
-	db.create_schema();
-
 	while(true) {
         if(!tradingbot::force && !nse_is_open()) {
 			if(!ticker.empty()) {
@@ -114,6 +113,11 @@ void tradingbot::trade(int top_gainers_idx) {
 
 			tradingbot::ticker = top_gainers->at(top_gainers_idx);
         }
+
+		if(!schema_created) {	
+			db.create_schema();
+			schema_created = true;
+		}
 
 		bool finished_for_the_day = false;
 		if(!ticker.empty()) {
