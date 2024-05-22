@@ -109,6 +109,7 @@ void tradingbot::trade(int top_gainers_idx) {
 				log.log("No top gainers.");
 			} else {
 				tradingbot::ticker = top_gainers->at(top_gainers_idx);
+				db.ticker = ticker;
 			}
 		}
 
@@ -119,8 +120,6 @@ void tradingbot::trade(int top_gainers_idx) {
 
 		bool finished_for_the_day = false;
 		if(!ticker.empty()) {
-			db.ticker = ticker;
-	
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, CANDLE_INTERVAL, CANDLE_RANGE);
 			if(candles != NULL) {
 				finished_for_the_day = trade(candles);
@@ -136,7 +135,6 @@ void tradingbot::trade(int top_gainers_idx) {
 		}
 	}
 }
-
 
 bool tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("\nEvaluating %s", ticker.c_str());
