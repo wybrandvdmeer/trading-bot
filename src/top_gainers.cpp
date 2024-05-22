@@ -10,11 +10,15 @@
 using namespace std;
 
 std::vector<std::string> * top_gainers::get() {
+	vector<std::string> * top_gainers = new vector<std::string>();
+
 	std::string response = dl.request_bin_data("https://finance.yahoo.com/gainers?count=100&offset=0");
+	if(response.length() == 0) {
+		log.log("No data received");
+		return top_gainers;
+	}
 
 	vector<std::string> words = split(response);
-
-	vector<std::string> * top_gainers = new vector<std::string>();
 
 	std::string ticker;
 	float price;
