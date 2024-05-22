@@ -95,23 +95,22 @@ void tradingbot::trade(int top_gainers_idx) {
 	}
 	
 	while(true) {
-        if(!tradingbot::force && !nse_is_open()) {
+		if(!tradingbot::force && !nse_is_open()) {
 			if(!ticker.empty()) {
 				ticker.erase();
 			}
-            std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000)); 
-            continue;
-        }
+			std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000)); 
+			continue;
+		}
 
-        if(tradingbot::ticker.empty()) {
-            top_gainers = tg.get();
-           
-            if(top_gainers->size() == 0) { 
-                log.log("No top gainers.");
-            } else {
+		if(tradingbot::ticker.empty()) {
+			top_gainers = tg.get();
+			if(top_gainers->size() == 0) { 
+				log.log("No top gainers.");
+			} else {
 				tradingbot::ticker = top_gainers->at(top_gainers_idx);
 			}
-        }
+		}
 
 		if(!schema_created) {	
 			db.create_schema();
