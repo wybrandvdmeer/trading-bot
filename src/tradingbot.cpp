@@ -112,7 +112,7 @@ void tradingbot::trade(int top_gainers_idx) {
 			}
 		}
 
-		if(!schema_created) {	
+		if(!ticker.empty() && !schema_created) {	
 			db.create_schema();
 			schema_created = true;
 		}
