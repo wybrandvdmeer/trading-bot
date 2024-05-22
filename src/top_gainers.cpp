@@ -9,7 +9,7 @@
 
 using namespace std;
 
-std::vector<std::string> * top_gainers::get() {
+std::vector<std::string> * top_gainers::get(std::vector<std::string> black_listed_tickers) {
 	vector<std::string> * top_gainers = new vector<std::string>();
 
 	std::string response = dl.request_bin_data("https://finance.yahoo.com/gainers?count=100&offset=0");
@@ -26,6 +26,10 @@ std::vector<std::string> * top_gainers::get() {
 		price = -1;
 		if ((*it).rfind("href=\"/quote/", 0) == 0 && (*it).find('%') == std::string::npos) {
 			ticker = (*it).substr(13, (*it).length() - 13 - 1);
+			if(std::find(black_listed_tickers.begin(), black_listed_tickers.end(), ticker) != black_listed_tickers.end()) {
+				ticker.erase();
+				continue;
+			} 
 		}
 
 		if (
@@ -43,7 +47,7 @@ std::vector<std::string> * top_gainers::get() {
 			price = std::stof(price_string, NULL);
 		}
 		
-		if(price != -1 && price <= 20) {	
+		if(price != -1 && price <= 20 && !ticker.empty()) {	
 			log.log("%s -> %f", ticker.c_str(), price);	
 			top_gainers->push_back(ticker);
 			price = -1;

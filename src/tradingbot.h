@@ -24,6 +24,7 @@ private:
 	indicators ind;
 	logger log;
 	alpaca_api alpaca;
+	std::vector<std::string> black_listed_tickers;
 	bool trade(std::vector<candle*> * candles);
 	bool nse_is_open();
 	bool candle_in_nse_closing_window(candle * c);

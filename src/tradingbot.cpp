@@ -93,7 +93,7 @@ void tradingbot::trade(int top_gainers_idx) {
 
 		return;
 	}
-	
+
 	while(true) {
 		if(!tradingbot::force && !nse_is_open()) {
 			if(!ticker.empty()) {
@@ -104,34 +104,43 @@ void tradingbot::trade(int top_gainers_idx) {
 		}
 
 		if(tradingbot::ticker.empty()) {
-			top_gainers = tg.get();
+			top_gainers = tg.get(black_listed_tickers);
 			if(top_gainers->size() == 0) { 
 				log.log("No top gainers.");
 			} else {
 				tradingbot::ticker = top_gainers->at(top_gainers_idx);
 				db.ticker = ticker;
+				schema_created = false;
 			}
 		}
 
-		if(!ticker.empty() && !schema_created) {	
-			db.create_schema();
-			schema_created = true;
-		}
-
+		int sleep = 60;
+	
 		bool finished_for_the_day = false;
 		if(!ticker.empty()) {
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, CANDLE_INTERVAL, CANDLE_RANGE);
 			if(candles != NULL) {
-				finished_for_the_day = trade(candles);
+				if(!get_quality_candles(candles)) {
+					log.log("\nQuality candles too low, ticker (%s) is blacklisted.", ticker.c_str());
+					tradingbot::black_listed_tickers.push_back(ticker);
+					tradingbot::ticker.erase();
+					sleep = 5;
+				} else {
+					if(!schema_created) {	
+						db.create_schema();
+						schema_created = true;
+					}
+					finished_for_the_day = trade(candles);
+				}
 			} else {
 				log.log("No candles received");
 			}
 		}
 
 		if(finished_for_the_day) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(60 * 60 * 1000));
+			std::this_thread::sleep_for(std::chrono::milliseconds(8 * 60 * 60 * 1000));
 		} else {
-			std::this_thread::sleep_for(std::chrono::milliseconds(60 * 1000));
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleep * 1000));
 		}
 	}
 }
@@ -139,10 +148,6 @@ void tradingbot::trade(int top_gainers_idx) {
 bool tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("\nEvaluating %s", ticker.c_str());
 
-	if(!get_quality_candles(candles)) {
-		log.log("\nQuality candles too low.");
-		return false;
-	}
 
 	candle * current = candles->at(candles->size() - 1);
 

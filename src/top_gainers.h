@@ -9,7 +9,7 @@
 
 class top_gainers {
 public:
-	std::vector<std::string> * get();
+	std::vector<std::string> * get(std::vector<std::string> black_listed_tickers);
 private:
 	logger log;
 	download dl;
