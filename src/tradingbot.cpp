@@ -107,11 +107,10 @@ void tradingbot::trade(int top_gainers_idx) {
             top_gainers = tg.get();
            
             if(top_gainers->size() == 0) { 
-                cout << "No top gainers.";
-                exit(1);
-            }
-
-			tradingbot::ticker = top_gainers->at(top_gainers_idx);
+                log.log("No top gainers.");
+            } else {
+				tradingbot::ticker = top_gainers->at(top_gainers_idx);
+			}
         }
 
 		if(!schema_created) {	
