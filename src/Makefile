@@ -40,5 +40,8 @@ candle.o: candle.cpp candle.h
 yahoo_api.o: yahoo_api.cpp yahoo_api.h stock.h
 	g++ -c yahoo_api.cpp
 
+install: 
+	sudo cp tb /usr/bin
+
 clean:
 	rm -rf *.o $(EXE)
