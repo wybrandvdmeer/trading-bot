@@ -122,7 +122,7 @@ void tradingbot::trade(int top_gainers_idx) {
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, CANDLE_INTERVAL, CANDLE_RANGE);
 			if(candles != NULL) {
 				if(!get_quality_candles(candles)) {
-					if(db.get_open_position(ticker) != NULL) {
+					if(schema_created && db.get_open_position(ticker) != NULL) {
 						log.log("\nQ of candles too low, but thrs an open position for ticker (%s).", 
 							ticker.c_str());
 					} else {
