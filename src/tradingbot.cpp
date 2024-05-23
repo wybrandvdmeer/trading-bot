@@ -193,12 +193,13 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	float open_0 = current->open;
 	float close_0 = current->close;
 
-	log.log("open/close: (%f,%f), sma200: %f, macd: %f, signal: %f, ema(20): %f", 
+	log.log("open/close: (%f,%f), sma200: %f, macd: %f, signal: %f, histogram: %f, ema(20): %f", 
 		open_0, 
 		close_0,
 		sma_200,
 		ind.m.get_macd(0),
 		ind.m.get_signal(0),
+		ind.m.get_histogram(0),
 		ind.calculate_ema(20, close_prices));
 
 	bool finished_for_the_day = candle_in_nse_closing_window(current);
