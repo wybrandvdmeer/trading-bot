@@ -17,7 +17,6 @@ using namespace std;
 #define MACD_TREND_LENGTH 3
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
-#define MACD_SIGNAL_DIFFERENCE 0.00002
 #define RELATIVE_HIST 0.5
 #define OPENING_PAUSE_IN_MIN 5
 #define QUALITY_CANDLES 0.9
