@@ -111,7 +111,6 @@ void tradingbot::trade(int top_gainers_idx) {
 				log.log("No top gainers.");
 			} else {
 				tradingbot::ticker = top_gainers->at(top_gainers_idx);
-				db.ticker = ticker;
 				schema_created = false;
 			}
 		}
@@ -119,6 +118,7 @@ void tradingbot::trade(int top_gainers_idx) {
 		int sleep = 60;
 	
 		if(!ticker.empty()) {
+			db.ticker = tradingbot::ticker;
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, CANDLE_INTERVAL, CANDLE_RANGE);
 			if(candles != NULL) {
 				if(!get_quality_candles(candles)) {
