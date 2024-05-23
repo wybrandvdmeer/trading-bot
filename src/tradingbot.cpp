@@ -99,6 +99,8 @@ void tradingbot::trade(int top_gainers_idx) {
 			if(!ticker.empty()) {
 				ticker.erase();
 			}
+			db.reset();
+			black_listed_tickers.clear();
 			std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000)); 
 			continue;
 		}
@@ -116,7 +118,6 @@ void tradingbot::trade(int top_gainers_idx) {
 
 		int sleep = 60;
 	
-		bool finished_for_the_day = false;
 		if(!ticker.empty()) {
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, CANDLE_INTERVAL, CANDLE_RANGE);
 			if(candles != NULL) {
@@ -124,24 +125,22 @@ void tradingbot::trade(int top_gainers_idx) {
 					log.log("\nQuality candles too low, ticker (%s) is blacklisted.", ticker.c_str());
 					tradingbot::black_listed_tickers.push_back(ticker);
 					tradingbot::ticker.erase();
-					sleep = 5;
+					sleep = 1;
 				} else {
 					if(!schema_created) {	
 						db.create_schema();
 						schema_created = true;
 					}
-					finished_for_the_day = trade(candles);
+					if(trade(candles)) {
+						sleep = 8 * 60 * 60;	
+					}
 				}
 			} else {
 				log.log("No candles received");
 			}
 		}
 
-		if(finished_for_the_day) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(8 * 60 * 60 * 1000));
-		} else {
-			std::this_thread::sleep_for(std::chrono::milliseconds(sleep * 1000));
-		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(sleep * 1000));
 	}
 }
 
@@ -275,7 +274,7 @@ void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, floa
 
 	delete candles;
 
-	log.log("Finished finished()");
+	log.log("Deleted candles.");
 }
 
 void tradingbot::buy(std::string ticker, float stock_price, long buy_time) {

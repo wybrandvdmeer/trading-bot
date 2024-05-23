@@ -14,6 +14,7 @@ using namespace std;
 db_api::db_api() {
 	debug = false;
 	read_only = false;
+	max_candle_time = 0L;
 }
 
 std::vector<candle*> * db_api::get_candles(std::string db_file) {
@@ -315,4 +316,8 @@ int db_api::selectInt(sqlite3_stmt * statement, int column) {
 
 float db_api::selectFloat(sqlite3_stmt * statement, int column) {
 	return (float)sqlite3_column_double(statement, column);
+}
+
+void db_api::reset() {
+	max_candle_time = 0L;
 }

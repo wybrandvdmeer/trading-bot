@@ -14,7 +14,11 @@
 
 class db_api {
 public:
+	bool debug;
+	std::string ticker;
 	db_api();
+
+	void reset();
 	void create_schema();
 	void drop_db();
 	position * get_open_position(std::string ticker);
@@ -22,8 +26,6 @@ public:
 	void close_position(position p);
 	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m, float sma_200);
 	std::vector<candle*> *get_candles(std::string db_file);
-	bool debug;
-	std::string ticker;
 private:
 	long max_candle_time;
 	sqlite3 * db;
