@@ -9,19 +9,6 @@
 using namespace std;
 
 void indicators::calculate_macd(std::vector<float> prices) {
-
-	/* The size of the price windows has a max. 
-	*/
-	if(prices.size() <= m.ema_12.size()) {
-		int end = m.ema_12.size() - prices.size() + 1;
-		log.log("Erasing macd elements in range: 0 - %d.", end);
-
-		m.ema_12.erase(m.ema_12.begin(), m.ema_12.begin() + end);
-		m.ema_26.erase(m.ema_26.begin(), m.ema_26.begin() + end);
-		m.macd.erase(m.macd.begin(), m.macd.begin() + end);
-		m.signal.erase(m.signal.begin(), m.signal.begin() + end);
-	}
-
 	calculate_ema(12, prices, &m.ema_12);
 	calculate_ema(26, prices, &m.ema_26);
 
@@ -30,8 +17,7 @@ void indicators::calculate_macd(std::vector<float> prices) {
 	float ema=0;
 
 	for(int idx=m.macd.size(); idx < m.ema_12.size(); idx++) {
-		float macd = m.ema_12.at(idx) - m.ema_26.at(idx);
-		m.macd.push_back(macd);
+		m.macd.push_back(m.ema_12.at(idx) - m.ema_26.at(idx));
 	}
 
 	calculate_ema(9, m.macd, &m.signal);

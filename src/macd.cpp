@@ -20,3 +20,7 @@ float macd::get_macd(int offset) {
 	return macd.at(macd.size() - offset - 1);
 }
 
+float macd::get_histogram(int offset) {
+	return get_macd(offset) - get_signal(offset);
+}
+

@@ -40,6 +40,11 @@ candle.o: candle.cpp candle.h
 yahoo_api.o: yahoo_api.cpp yahoo_api.h stock.h
 	g++ -c yahoo_api.cpp
 
+install_py:
+	sudo cp get_candles.py /usr/bin/get_candles
+	sudo chmod 644 /usr/bin/get_candles
+	sudo chmod +x /usr/bin/get_candles
+
 install: clean $(EXE) 
 	sudo cp tb /usr/bin
 

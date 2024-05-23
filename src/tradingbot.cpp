@@ -19,6 +19,7 @@ using namespace std;
 #define MACD_SIGNAL_DIFFERENCE 0.00002
 #define SMA_200_DIFFERENCE 0.0002
 #define OPENING_PAUSE_IN_MIN 5
+#define QUALITY_CANDLES 0.9
 
 /* 
 Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na bijv de 1e pull back.
@@ -41,7 +42,6 @@ tradingbot::tradingbot() {
 	tradingbot::force = false;
 	tradingbot::debug = false;
 	tradingbot::disable_alpaca = false;
-	tradingbot::prv_macd_signal_diff = -1;
 }
 
 void tradingbot::trade(int top_gainers_idx) {
@@ -122,15 +122,22 @@ void tradingbot::trade(int top_gainers_idx) {
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, CANDLE_INTERVAL, CANDLE_RANGE);
 			if(candles != NULL) {
 				if(!get_quality_candles(candles)) {
-					log.log("\nQuality candles too low, ticker (%s) is blacklisted.", ticker.c_str());
-					tradingbot::black_listed_tickers.push_back(ticker);
-					tradingbot::ticker.erase();
-					sleep = 1;
+					if(db.get_open_position(ticker) != NULL) {
+						log.log("\nQ of candles too low, but thrs an open position for ticker (%s).", 
+							ticker.c_str());
+					} else {
+						log.log("\nQ of candles too low, ticker (%s) is blacklisted.", ticker.c_str());
+						tradingbot::black_listed_tickers.push_back(ticker);
+						tradingbot::ticker.erase();
+						sleep = 1;
+					}
 				} else {
 					if(!schema_created) {	
 						db.create_schema();
 						schema_created = true;
 					}
+					/* True -> finished for the day. 
+					*/
 					if(trade(candles)) {
 						sleep = 8 * 60 * 60;	
 					}
@@ -146,7 +153,6 @@ void tradingbot::trade(int top_gainers_idx) {
 
 bool tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("\nEvaluating %s", ticker.c_str());
-
 
 	candle * current = candles->at(candles->size() - 1);
 
@@ -188,11 +194,11 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(prv_macd_signal_diff != -1 && 
-			ind.m.get_macd(0) < prv_macd_signal_diff) {
-			log.log("sell: prv macd/signal diff (%f) is greater then macd(%f).",
-			prv_macd_signal_diff,
-			ind.m.get_macd(0));
+		if(ind.m.macd.size() > 0 && 
+			ind.m.get_histogram(0) < ind.m.get_histogram(1)) {
+			log.log("sell: prv histogram (%f) is greater then current histogram (%f).",
+			ind.m.get_histogram(1),
+			ind.m.get_histogram(0));
 			bSell = true;
 		} else
 		if(finished_for_the_day) {
@@ -321,6 +327,11 @@ void tradingbot::sell(position *p) {
 }
 	
 bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
+	if(candles->size() < 100) {
+		log.log("Q of candles too low: not enough (%ld) candles.", candles->size());
+		return false;
+	}
+
 	float non_valid_candles=0;
 	for(auto c : *candles) {
 		if(!c->is_valid()) {
@@ -330,10 +341,10 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 
 	float quality = (candles->size() - non_valid_candles)/candles->size();
 
-	log.log("quality: %f%, noOfCandles: %ld, noOfNonValidCandles: %f", 
+	log.log("Q: %f, noOfCandles: %ld, noOfNonValidCandles: %f", 
 		quality, candles->size() , non_valid_candles);
 	
-	return quality >= 0.9;
+	return quality >= QUALITY_CANDLES;
 }
 
 bool tradingbot::candle_in_openings_pause(candle * c) {
