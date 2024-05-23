@@ -256,6 +256,12 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 
 	float sma_diff = get_sma_200_set_point(close_0);
 
+	if(ind.m.macd.size() > 0 && 
+		ind.m.get_histogram(0) < ind.m.get_histogram(1)) {
+			log.log("no trade: prv histogram (%f) is greater then current histogram (%f).",
+				ind.m.get_histogram(1),
+				ind.m.get_histogram(0));
+	} else
 	if(close_0 < sma_200 + sma_diff) {
 		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200 + sma_diff);
 	} else
