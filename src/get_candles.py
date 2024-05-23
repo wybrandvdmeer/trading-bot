@@ -75,7 +75,11 @@ if len(open) == 0:
 
 sma_200 = [x for x in sma_200 if x is not None]
 
-init_value = sma_200[0]
+if len(sma_200) == 0:
+	init_value = 0
+else:
+	init_value = sma_200[0]
+
 for i in range(0, len(open) - len(sma_200)):
     sma_200.insert(0, init_value)
 
