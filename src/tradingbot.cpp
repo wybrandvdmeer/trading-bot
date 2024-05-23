@@ -17,7 +17,7 @@ using namespace std;
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
 #define MACD_SIGNAL_DIFFERENCE 0.00002
-#define RELATIVE_SMA_DIFFERENCE 0.05
+#define RELATIVE_SMA_DIFFERENCE 0.1
 #define OPENING_PAUSE_IN_MIN 5
 #define QUALITY_CANDLES 0.9
 
@@ -254,23 +254,28 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		return finished_for_the_day;
 	}
 
-	float sma_diff = get_sma_200_set_point(close_0);
+	float sma_diff = get_sma_200_set_point(close_0, sma_200);
 
 	if(ind.m.macd.size() > 0 && 
 		ind.m.get_histogram(0) < ind.m.get_histogram(1)) {
-			log.log("no trade: prv histogram (%f) is greater then current histogram (%f).",
+			log.log("(%s) no trade: prv histogram (%f) is greater then current histogram (%f).",
+				date_to_time_string(current->time).c_str(), 
 				ind.m.get_histogram(1),
 				ind.m.get_histogram(0));
 	} else
 	if(close_0 < sma_200 + sma_diff) {
-		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200 + sma_diff);
+		log.log("(%s) no trade: price (%f) is below sma200 (%f).", 
+			date_to_time_string(current->time).c_str(), close_0, sma_200 + sma_diff);
 	} else
 	if(candle_in_openings_pause(current)) {
-		log.log("no trade: Candle is still in openings pause.");
+		log.log("(%s) no trade: Candle is still in openings pause.", 
+			date_to_time_string(current->time).c_str());
 	} else
 	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + MACD_SIGNAL_DIFFERENCE) {
-		log.log("no trade: macd(%f) is smaller then signal (%f).", 
-			ind.m.get_macd(0), ind.m.get_signal(0));
+		log.log("(%s) no trade: macd(%f) is smaller then signal (%f).",
+			date_to_time_string(current->time).c_str(), 
+			ind.m.get_macd(0), 
+			ind.m.get_signal(0));
 	} else {
 		/* In case of back-testing, the candle time is leading. 
 		*/
@@ -285,9 +290,9 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	return false;
 }
 
-float tradingbot::get_sma_200_set_point(float price) {
+float tradingbot::get_sma_200_set_point(float price, float sma_200) {
 	if(sma_200_set_point == 0) {
-		sma_200_set_point = RELATIVE_SMA_DIFFERENCE * price;
+		sma_200_set_point = RELATIVE_SMA_DIFFERENCE * (sma_200 - price);
 		log.log("sma_200_set_point: %.2f", sma_200_set_point);
 	}
 	return sma_200_set_point;
@@ -422,6 +427,17 @@ bool tradingbot::nse_is_open() {
 		return true;
 	}
 	return false;
+}
+
+std::string tradingbot::date_to_time_string(long ts) {
+	ts = ts - 4 * 3600;
+	struct tm *t = gmtime(&ts);
+	char buf[100];
+	sprintf(buf, "%02d:%02d:%02d", 
+		t->tm_hour, 
+		t->tm_min, 
+		t->tm_sec);
+	return std::string(buf);
 }
 
 std::string tradingbot::date_to_string(long ts) {
