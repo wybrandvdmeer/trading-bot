@@ -90,6 +90,7 @@ dates = []
 for d in stock_prices.index:
     dates.append(d)
 
+ids = []
 buy_time = []
 sell_time = []
 buy_price = []
@@ -97,20 +98,21 @@ sell_price = []
 no_of_stocks = []
 
 csr.execute(
-    "SELECT buy_time, sell_time, stock_price, sell_price, no_of_stocks FROM positions WHERE ticker = '" + ticker + "' AND sell_price IS NOT NULL")
+    "SELECT id, buy_time, sell_time, stock_price, sell_price, no_of_stocks FROM positions WHERE ticker = '" + ticker + "' AND sell_price IS NOT NULL")
 
 for row in csr:
-    buy_time.append(datetime.utcfromtimestamp(row[0]))
-    sell_time.append(datetime.utcfromtimestamp(row[1]))
-    buy_price.append(row[2])
-    sell_price.append(row[3])
-    no_of_stocks.append(row[4])
+    ids.append(row[0])
+    buy_time.append(datetime.utcfromtimestamp(row[1]))
+    sell_time.append(datetime.utcfromtimestamp(row[2]))
+    buy_price.append(row[3])
+    sell_price.append(row[4])
+    no_of_stocks.append(row[5])
 
 conn.close()
 
 positions = pd.DataFrame(
-    {'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 'sell_price': sell_price,
-     'no_of_stocks': no_of_stocks})
+    {'ids': ids, 'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 
+		'sell_price': sell_price, 'no_of_stocks': no_of_stocks})
 positions['gain'] = positions['no_of_stocks'] * (positions['sell_price'] - positions['buy_price'])
 gain = positions['gain'].sum()
 no_of_stocks = positions['no_of_stocks'].sum()
@@ -129,6 +131,7 @@ print(txt)
 fplt.add_text((time[10], max_open), txt, color='#bb7700', ax=ax)
 
 for index, row in positions.iterrows():
+    id = row['ids']
     x1 = row['buy_time']
     y1 = row['buy_price']
     x2 = row['sell_time']
@@ -136,7 +139,7 @@ for index, row in positions.iterrows():
 
     line = fplt.add_line((x1, y1), (x2, y2), color='#9900ff', interactive=True)
 
-    txt = 'buy: ' + str(y1) + ' sell: ' + str(y2) + ' gain/stock: ' + "{:.2f}".format(y2 - y1)
+    txt = 'id: ' + str(id) +' buy: ' + str(y1) + ' sell: ' + str(y2) + ' gain/stock: ' + "{:.2f}".format(y2 - y1)
     fplt.add_text((x1, y1), txt, color='#bd7700', ax=ax)
 
 conn.close()
