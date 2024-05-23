@@ -14,6 +14,7 @@
 
 using namespace std;
 
+#define MACD_TREND_LENGTH 2
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
 #define MACD_SIGNAL_DIFFERENCE 0.00002
@@ -205,7 +206,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(ind.m.is_histogram_trend_negative(0, 2)) {
+		if(ind.m.is_histogram_trend_negative(0, MACD_TREND_LENGTH)) {
 			log.log("sell: histogram trend is negative.");
 			bSell = true;
 		} else
