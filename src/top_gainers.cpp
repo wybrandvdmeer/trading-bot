@@ -50,9 +50,8 @@ std::vector<std::string> * top_gainers::get(std::vector<std::string> black_liste
 			price = std::stof(price_string, NULL);
 		}
 		
-		if(price != -1 && price <= 20 && !ticker.empty()) {	
+		if(price != -1 && !ticker.empty()) {	
 			if(ticker_prices.count(ticker) == 0) {
-				log.log("%s -> %f", ticker.c_str(), price);	
 				ticker_prices[ticker] =  price;
 			}
 			price = -1;
@@ -61,7 +60,10 @@ std::vector<std::string> * top_gainers::get(std::vector<std::string> black_liste
 
 	for(std::map<std::string,float>::iterator it = ticker_prices.begin(); 
 		it != ticker_prices.end(); it++) {
-  		top_gainers->push_back(it->first);
+		if(it->second <= 20) {
+			log.log("%s -> %f", it->first.c_str(), it->second);	
+  			top_gainers->push_back(it->first);
+		}
 	}
 
 	return top_gainers->size() > 0 ? top_gainers : NULL;
