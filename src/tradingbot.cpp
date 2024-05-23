@@ -26,11 +26,7 @@ Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na b
 Trendfollowing: Identificeer op dag basis een trend en stap dan in aan het begin vd trend op basis
 van bijv de macd.
 
-Top-gainers: queryen op 1m.  later mischien op kwartier.
-macd boven 0
-macd boven signal
-Dan buy in de morgen.
-Wanneer cross macd/signal -> sell
+histogram: 3x dalen (eventueel 2x) dan verkopen, of ihgv signal cross-over.
 
 selectie uit top 5 topGainers.
 
@@ -209,8 +205,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(ind.m.macd.size() > 0 && 
-			ind.m.get_histogram(0) < ind.m.get_histogram(1)) {
+		if(ind.m.is_histogram_trend_negative(0, 2)) {
 			log.log("sell: prv histogram (%f) is greater then current histogram (%f).",
 			ind.m.get_histogram(1),
 			ind.m.get_histogram(0));
