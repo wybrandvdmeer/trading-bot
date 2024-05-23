@@ -9,17 +9,19 @@ from dateutil.tz import gettz
 import argparse
 
 days = 0
-if len(sys.argv) > 2:
-    days = int(sys.argv[2])
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--db-file', type=str)
 parser.add_argument('--ticker', type=str)
+parser.add_argument('--days', type=int)
 args = parser.parse_args()
 
 ticker = args.ticker
 if ticker is not None:
     ticker = ticker.upper()
+
+if args.days != None:
+	days = args.days
 
 db_file = args.db_file
 dt = datetime.today() - timedelta(days=days)
