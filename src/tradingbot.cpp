@@ -17,7 +17,7 @@ using namespace std;
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
 #define MACD_SIGNAL_DIFFERENCE 0.00002
-#define RELATIVE_SMA_DIFFERENCE 0.1
+#define RELATIVE_SMA_DIFFERENCE 0
 #define OPENING_PAUSE_IN_MIN 5
 #define QUALITY_CANDLES 0.9
 
@@ -292,7 +292,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 
 float tradingbot::get_sma_200_set_point(float price, float sma_200) {
 	if(sma_200_set_point == 0) {
-		sma_200_set_point = RELATIVE_SMA_DIFFERENCE * (sma_200 - price);
+		sma_200_set_point = RELATIVE_SMA_DIFFERENCE * (price - sma_200);
 		log.log("sma_200_set_point: %.2f", sma_200_set_point);
 	}
 	return sma_200_set_point;
