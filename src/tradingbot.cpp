@@ -206,9 +206,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	if(p != NULL) {
 		bool bSell = false;
 		if(ind.m.is_histogram_trend_negative(0, 2)) {
-			log.log("sell: prv histogram (%f) is greater then current histogram (%f).",
-			ind.m.get_histogram(1),
-			ind.m.get_histogram(0));
+			log.log("sell: histogram trend is negative.");
 			bSell = true;
 		} else
 		if(finished_for_the_day) {
