@@ -36,10 +36,11 @@ private:
 	std::string date_to_string(long ts);
 	std::string date_to_time_string(long ts);
 	void ema_test();
+	int find_position_of_last_day(std::vector<candle*> *candles);
 
 	/* Trade parameters. */
-	float sma_200_set_point;
-	float get_sma_200_set_point(float price, float sma_200);
+	float macd_set_point;
+	float get_macd_set_point(macd m, std::vector<candle*> *candles);
 };
 
 #endif

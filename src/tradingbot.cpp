@@ -17,7 +17,7 @@ using namespace std;
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
 #define MACD_SIGNAL_DIFFERENCE 0.00002
-#define RELATIVE_SMA_DIFFERENCE 0
+#define RELATIVE_HIST 0.5
 #define OPENING_PAUSE_IN_MIN 5
 #define QUALITY_CANDLES 0.9
 
@@ -42,7 +42,7 @@ tradingbot::tradingbot() {
 	tradingbot::force = false;
 	tradingbot::debug = false;
 	tradingbot::disable_alpaca = false;
-	tradingbot::sma_200_set_point = 0;
+	tradingbot::macd_set_point = 0;
 }
 
 void tradingbot::trade(int top_gainers_idx) {
@@ -67,22 +67,9 @@ void tradingbot::trade(int top_gainers_idx) {
 
 		std::vector<candle*> *candles = db.get_candles(db_file);
 
-		/* Find position of last day.
-		*/
-		int idx=0, day_break_position=-1, first_day, prv_day=-1;
-		for(auto c : *candles) {
-			first_day = gmtime(&(c->time))->tm_wday;
-			if(prv_day == -1) {
-				prv_day = first_day;
-			} else
-			if(prv_day != first_day) {
-				day_break_position = idx;
-				prv_day = first_day;
-			}
-			idx++;
-		}
+		int day_break_position = find_position_of_last_day(candles);
 
-		for(idx=day_break_position + 1; idx < candles->size(); idx++) {
+		for(int idx=day_break_position + 1; idx < candles->size(); idx++) {
 			std::vector<candle*> * v = new std::vector<candle*>();
 			for(int idx2=0; idx2 < idx; idx2++) {
 				v->push_back(candles->at(idx2));
@@ -164,13 +151,28 @@ void tradingbot::trade(int top_gainers_idx) {
 	}
 }
 
+int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
+	int idx=0, day_break_position=-1, first_day, prv_day=-1;
+    for(auto c : *candles) {
+    	first_day = gmtime(&(c->time))->tm_wday;
+        if(prv_day == -1) {
+        	prv_day = first_day;
+        } else
+       	if(prv_day != first_day) {
+        	day_break_position = idx;
+            prv_day = first_day;
+		}
+        idx++;
+	}
+	return day_break_position;
+}
+
 bool tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("\nEvaluating %s", ticker.c_str());
 
 	candle * current = candles->at(candles->size() - 1);
 
 	/* Skip non valid candle. 
-	W'll store it when a valid candle comes along. 
 	*/
 	if(!current->is_valid()) {
 		log.log("Received a non valid candle.");
@@ -249,12 +251,12 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 			}
 			sell(p);
 		}
+
+		macd_set_point = get_macd_set_point(ind.m, candles);
 		
 		finish(ticker, candles, sma_200);
 		return finished_for_the_day;
 	}
-
-	float sma_diff = get_sma_200_set_point(close_0, sma_200);
 
 	if(ind.m.macd.size() > 0 && 
 		ind.m.get_histogram(0) < ind.m.get_histogram(1)) {
@@ -263,15 +265,15 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 				ind.m.get_histogram(1),
 				ind.m.get_histogram(0));
 	} else
-	if(close_0 < sma_200 + sma_diff) {
+	if(close_0 < sma_200) {
 		log.log("(%s) no trade: price (%f) is below sma200 (%f).", 
-			date_to_time_string(current->time).c_str(), close_0, sma_200 + sma_diff);
+			date_to_time_string(current->time).c_str(), close_0, sma_200);
 	} else
 	if(candle_in_openings_pause(current)) {
 		log.log("(%s) no trade: Candle is still in openings pause.", 
 			date_to_time_string(current->time).c_str());
 	} else
-	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + MACD_SIGNAL_DIFFERENCE) {
+	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + macd_set_point) {
 		log.log("(%s) no trade: macd(%f) is smaller then signal (%f).",
 			date_to_time_string(current->time).c_str(), 
 			ind.m.get_macd(0), 
@@ -290,12 +292,20 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	return false;
 }
 
-float tradingbot::get_sma_200_set_point(float price, float sma_200) {
-	if(sma_200_set_point == 0) {
-		sma_200_set_point = RELATIVE_SMA_DIFFERENCE * (price - sma_200);
-		log.log("sma_200_set_point: %.2f", sma_200_set_point);
+float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
+	int start = find_position_of_last_day(candles);
+
+	float max_hist=0;
+	for(int idx=start; idx < candles->size(); idx++) {
+		int day = candles->size() - idx;
+		if(max_hist < m.get_histogram(day)) {
+			max_hist = m.get_histogram(day);
+		}
 	}
-	return sma_200_set_point;
+
+	log.log("Max histogram: %f", candles->size(), max_hist);
+
+	return RELATIVE_HIST * max_hist;
 }
 
 void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, float sma_200) {
