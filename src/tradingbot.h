@@ -35,6 +35,10 @@ private:
 	void finish(std::string ticker, std::vector<candle*> *candles, float sma_200);
 	std::string date_to_string(long ts);
 	void ema_test();
+
+	/* Trade parameters. */
+	float sma_200_set_point;
+	float get_sma_200_set_point(float price);
 };
 
 #endif

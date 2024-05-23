@@ -17,6 +17,37 @@ db_api::db_api() {
 	max_candle_time = 0L;
 }
 
+std::vector<position*> * db_api::get_positions() {
+	char sql[1000];
+	std::vector<position*> *positions = new std::vector<position*>();
+
+	read_only=true;
+	open();
+	read_only=false;
+
+	sprintf(sql, "SELECT ticker, buy_time, sell_time, no_of_stocks, stock_price, sell_price \
+		FROM positions ORDER BY id");
+
+	if(debug) {
+		log.log("%s", sql);
+	}
+
+	sqlite3_stmt * s = prepare(std::string(sql));
+
+	for(;sqlite3_step(s) == SQLITE_ROW;) {
+		position * p = new position();
+		p->ticker = selectString(s, 0);
+		p->buy = selectInt(s, 1);
+		p->sell = selectInt(s, 2);
+		p->no_of_stocks = selectInt(s, 3);
+		p->stock_price = selectFloat(s, 4);
+		p->sell_price = selectFloat(s, 5);
+		positions->push_back(p);
+	}
+
+	return positions;
+}
+	
 std::vector<candle*> * db_api::get_candles(std::string db_file) {
 	char sql[1000];
 	std::vector<candle*> *candles = new std::vector<candle*>();
@@ -308,6 +339,11 @@ sqlite3_stmt * db_api::prepare(std::string sql) {
 	}
     
 	return statement;
+}
+
+std::string db_api::selectString(sqlite3_stmt * statement, int column) {
+	char * t = (char*)sqlite3_column_text(statement, column);
+	return std::string(t);
 }
 
 int db_api::selectInt(sqlite3_stmt * statement, int column) {

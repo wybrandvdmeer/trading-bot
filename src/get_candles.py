@@ -123,9 +123,9 @@ fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
 fplt.plot(sma_200, ax=ax, legend='SMA-200')
 
 print(positions)
-print('Gain: ' + "{:.5f}".format(gain))
 
 txt = "Gain: " + str(gain) + '\nTotal no of stocks: ' + str(no_of_stocks) + '\nTotal no of trades: ' + str(no_of_trades)
+print(txt)
 fplt.add_text((time[10], max_open), txt, color='#bb7700', ax=ax)
 
 for index, row in positions.iterrows():

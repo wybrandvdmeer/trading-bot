@@ -26,6 +26,7 @@ public:
 	void close_position(position p);
 	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m, float sma_200);
 	std::vector<candle*> *get_candles(std::string db_file);
+	std::vector<position*> *get_positions();
 private:
 	long max_candle_time;
 	sqlite3 * db;
@@ -36,6 +37,7 @@ private:
 	void close();
 	void close(sqlite3_stmt * statement);
 	float selectFloat(sqlite3_stmt * statement, int column);
+	std::string selectString(sqlite3_stmt * statement, int column);
 	int selectInt(sqlite3_stmt * statement, int column);
 	sqlite3_stmt * prepare(std::string sql);
 	bool has_candle(std::string ticker, candle * c);
