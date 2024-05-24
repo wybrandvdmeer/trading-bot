@@ -26,7 +26,7 @@ using namespace std;
 #define RELATIVE_HIST 0.0
 
 // Om ons te beschermen tegen pre-market buying en dan bij opening Selling scenario's.
-#define OPENING_PAUSE_IN_MIN 5
+#define OPENINGS_WINDOW_IN_MIN 5
 #define QUALITY_CANDLES 0.9
 
 /* 
@@ -262,8 +262,8 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 
 	/* Buy logic. 
 	*/
-	if(candle_in_openings_pause(current)) {
- 		log.log("no trade: Candle is still in openings pause."); 
+	if(in_openings_window(current->time)) { // for back-testing.
+ 		log.log("no trade: Candle is still in openings window."); 
 	} else
 	if(!ind.m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
 		log.log("no trade: not a positive trend");
@@ -289,8 +289,6 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	return false;
 }
 
-/* FOR NOW NOT USED. 
-*/
 float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
 	int start = find_position_of_last_day(candles);
 
@@ -416,7 +414,7 @@ bool tradingbot::nse_is_open() {
 	int minutes = tm_struct->tm_min;
 
 	if(hour >= 13 && hour < 20) {
-		if(hour == 13 && minutes <= 30) {
+		if(hour == 13 && minutes <= 30 + OPENINGS_WINDOW_IN_MIN) {
 			return false;
 		}
 		return true;
@@ -435,7 +433,7 @@ std::string tradingbot::date_to_time_string(long ts) {
 	return std::string(buf);
 }
 
-bool tradingbot::candle_in_openings_pause(candle * c) {
+bool tradingbot::in_openings_window(long current_time) {
 	time_t now = time(NULL);
 	struct tm *tm_struct = gmtime(&now);
 
@@ -444,9 +442,9 @@ bool tradingbot::candle_in_openings_pause(candle * c) {
 	tm_struct->tm_sec = 0;
 
 	long ts = timegm(tm_struct)%(24 * 3600);
-	long ts_candle = (c->time)%(24 * 3600);
+	current_time = current_time%(24 * 3600);
 
-	return ts <= ts_candle && ts_candle < ts + OPENING_PAUSE_IN_MIN * 60;
+	return ts <= current_time && current_time < ts + OPENINGS_WINDOW_IN_MIN * 60;
 }
 
 std::string tradingbot::date_to_string(long ts) {
