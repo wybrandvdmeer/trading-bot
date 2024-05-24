@@ -16,12 +16,16 @@ using namespace std;
 
 #define SELL_NEGATIVE_TREND_LENGTH 4
 #define BUY_POSITIVE_TREND_LENGTH 2
+
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
 
-// Setting of 0.5 causes to catch only the main trade.  #define RELATIVE_HIST 0.5    
+// Setting of 0.5 causes to catch only the main trade. 
 // When 0 the buying selling is only done whem macd > signal and positive/negative trend.
+// Alpaca charges low commision.
 #define RELATIVE_HIST 0.0
+
+// Om ons te beschermen tegen pre-market buying en dan bij opening Selling scenario's.
 #define OPENING_PAUSE_IN_MIN 5
 #define QUALITY_CANDLES 0.9
 
