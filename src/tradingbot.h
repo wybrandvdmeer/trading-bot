@@ -36,6 +36,7 @@ private:
 	std::string date_to_time_string(long ts);
 	void ema_test();
 	int find_position_of_last_day(std::vector<candle*> *candles);
+	bool candle_in_openings_pause(candle *c);
 
 	/* Trade parameters. */
 	float macd_set_point;

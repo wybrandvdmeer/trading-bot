@@ -255,6 +255,12 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		finish(ticker, candles, sma_200);
 		return finished_for_the_day;
 	}
+
+	/* Buy logic. 
+	*/
+	if(candle_in_openings_pause(current)) {
+ 		log.log("no trade: Candle is still in openings pause."); 
+	} else
 	if(!ind.m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
 		log.log("no trade: not a positive trend");
 	} else 
@@ -423,6 +429,20 @@ std::string tradingbot::date_to_time_string(long ts) {
 		t->tm_min, 
 		t->tm_sec);
 	return std::string(buf);
+}
+
+bool tradingbot::candle_in_openings_pause(candle * c) {
+	time_t now = time(NULL);
+	struct tm *tm_struct = gmtime(&now);
+
+	tm_struct->tm_hour = 13;
+	tm_struct->tm_min = 30;
+	tm_struct->tm_sec = 0;
+
+	long ts = timegm(tm_struct)%(24 * 3600);
+	long ts_candle = (c->time)%(24 * 3600);
+
+	return ts <= ts_candle && ts_candle < ts + OPENING_PAUSE_IN_MIN * 60;
 }
 
 std::string tradingbot::date_to_string(long ts) {
