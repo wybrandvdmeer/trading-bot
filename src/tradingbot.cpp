@@ -14,10 +14,11 @@
 
 using namespace std;
 
-#define MACD_TREND_LENGTH 3
+#define SELL_NEGATIVE_TREND_LENGTH 4
+#define BUY_POSITIVE_TREND_LENGTH 2
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
-#define RELATIVE_HIST 0.5
+#define RELATIVE_HIST 0.1
 #define OPENING_PAUSE_IN_MIN 5
 #define QUALITY_CANDLES 0.9
 
@@ -206,7 +207,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(ind.m.is_histogram_trending(MACD_TREND_LENGTH, false)) {
+		if(ind.m.is_histogram_trending(SELL_NEGATIVE_TREND_LENGTH, false)) {
 			log.log("sell: histogram trend is negative.");
 			bSell = true;
 		} else
@@ -246,25 +247,16 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 			sell(p);
 		}
 
-		macd_set_point = get_macd_set_point(ind.m, candles);
-		
 		finish(ticker, candles, sma_200);
 		return finished_for_the_day;
 	}
-
-	if(candle_in_openings_pause(current)) {
-		log.log("no trade: Candle is still in openings pause."); 
-	} else
-	if(ind.m.macd.size() > 0 && 
-		ind.m.get_histogram(0) < ind.m.get_histogram(1)) {
-			log.log("no trade: prv histogram (%f) is greater then current histogram (%f).",
-				ind.m.get_histogram(1),
-				ind.m.get_histogram(0));
-	} else
+	if(!ind.m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
+		log.log("no trade: not a positive trend");
+	} else 
 	if(close_0 < sma_200) {
 		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200);
 	} else
-	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + macd_set_point) {
+	if(ind.m.get_macd(0) <= ind.m.get_signal(0) ) {
 		log.log("no trade: macd(%f) is smaller then signal (%f).",
 			ind.m.get_macd(0), 
 			ind.m.get_signal(0));
@@ -282,6 +274,8 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	return false;
 }
 
+/* FOR NOW NOT USED. 
+*/
 float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
 	int start = find_position_of_last_day(candles);
 
@@ -379,20 +373,6 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 		quality, candles->size() , non_valid_candles);
 	
 	return quality >= QUALITY_CANDLES;
-}
-
-bool tradingbot::candle_in_openings_pause(candle * c) {
-	time_t now = time(NULL);
-	struct tm *tm_struct = gmtime(&now);
-
-	tm_struct->tm_hour = 13;
-	tm_struct->tm_min = 30;
-	tm_struct->tm_sec = 0;
-
-	long ts = timegm(tm_struct)%(24 * 3600);
-	long ts_candle = (c->time)%(24 * 3600);
-
-	return ts <= ts_candle && ts_candle < ts + OPENING_PAUSE_IN_MIN * 60;
 }
 
 bool tradingbot::candle_in_nse_closing_window(candle * c) {

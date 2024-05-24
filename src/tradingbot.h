@@ -31,7 +31,6 @@ private:
 	void buy(std::string ticker, float stock_price, long buy_time);
 	void sell(position * p);
 	bool get_quality_candles(std::vector<candle*> *candles);
-	bool candle_in_openings_pause(candle *c);
 	void finish(std::string ticker, std::vector<candle*> *candles, float sma_200);
 	std::string date_to_string(long ts);
 	std::string date_to_time_string(long ts);
