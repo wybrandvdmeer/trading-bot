@@ -18,7 +18,10 @@ using namespace std;
 #define BUY_POSITIVE_TREND_LENGTH 2
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
-#define RELATIVE_HIST 0.1
+
+// Setting of 0.5 causes to catch only the main trade.  #define RELATIVE_HIST 0.5    
+// When 0 the buying selling is only done whem macd > signal and positive/negative trend.
+#define RELATIVE_HIST 0.0
 #define OPENING_PAUSE_IN_MIN 5
 #define QUALITY_CANDLES 0.9
 
@@ -245,6 +248,8 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 				p->sell = current->time;
 			}
 			sell(p);
+		
+			macd_set_point = get_macd_set_point(ind.m, candles);
 		}
 
 		finish(ticker, candles, sma_200);
@@ -256,7 +261,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	if(close_0 < sma_200) {
 		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200);
 	} else
-	if(ind.m.get_macd(0) <= ind.m.get_signal(0) ) {
+	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + macd_set_point) {
 		log.log("no trade: macd(%f) is smaller then signal (%f).",
 			ind.m.get_macd(0), 
 			ind.m.get_signal(0));
