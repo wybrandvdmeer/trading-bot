@@ -18,7 +18,7 @@ top_gainers::top_gainers() {
 	slave = false;
 }
 
-std::vector<std::string> * top_gainers::get(std::vector<std::string> black_listed_tickers) {
+std::vector<std::string> * top_gainers::get() {
 	vector<std::string> * top_gainers = new vector<std::string>();
 	if(slave) {
 		std::string file = get_top_gainers_list_name();
@@ -30,17 +30,14 @@ std::vector<std::string> * top_gainers::get(std::vector<std::string> black_liste
 
 		std::string ticker;
 		while (f >> ticker) {
-			if(std::find(black_listed_tickers.begin(), black_listed_tickers.end(), ticker) == 
-				black_listed_tickers.end()) {
-				top_gainers->push_back(ticker);
-			}
+			top_gainers->push_back(ticker);
 		}
 		return top_gainers;
 	}
-	return yget(black_listed_tickers);
+	return yget();
 }
 
-std::vector<std::string> * top_gainers::yget(std::vector<std::string> black_listed_tickers) {
+std::vector<std::string> * top_gainers::yget() {
 	std::map<std::string, float> ticker_prices;
 
 	vector<std::string> * top_gainers = new vector<std::string>();
@@ -59,10 +56,6 @@ std::vector<std::string> * top_gainers::yget(std::vector<std::string> black_list
 		price = -1;
 		if ((*it).rfind("href=\"/quote/", 0) == 0 && (*it).find('%') == std::string::npos) {
 			ticker = (*it).substr(13, (*it).length() - 13 - 1);
-			if(std::find(black_listed_tickers.begin(), black_listed_tickers.end(), ticker) != black_listed_tickers.end()) {
-				ticker.erase();
-				continue;
-			} 
 		}
 
 		if (

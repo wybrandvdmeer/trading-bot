@@ -114,11 +114,12 @@ void tradingbot::trade(int top_gainers_idx) {
 		}
 
 		if(tradingbot::ticker.empty()) {
-			top_gainers = tg.get(black_listed_tickers);
-			if(top_gainers->size() == 0) { 
+			top_gainers = tg.get();
+			int tg_idx = get_top_gainer(top_gainers);
+			if(tg_idx == -1) { 
 				log.log("No top gainers.");
 			} else {
-				tradingbot::ticker = top_gainers->at(top_gainers_idx);
+				tradingbot::ticker = top_gainers->at(tg_idx);
 				schema_created = false;
 			}
 		}
