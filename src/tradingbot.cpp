@@ -23,7 +23,7 @@ using namespace std;
 // Setting of 0.5 causes to catch only the main trade. 
 // When 0 the buying selling is only done whem macd > signal and positive/negative trend.
 // Alpaca charges low commision.
-#define RELATIVE_HIST 0.0
+#define RELATIVE_HIST 0.1
 
 // Om ons te beschermen tegen pre-market buying en dan bij opening Selling scenario's.
 #define OPENINGS_WINDOW_IN_MIN 5
