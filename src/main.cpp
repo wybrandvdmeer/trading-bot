@@ -55,6 +55,11 @@ int main(int argc, char ** argv) {
 		t.force = true;
 	}
 	
+	char *slaveOption = getOption(argv, argv + argc, "--slave");
+	if(slaveOption != NULL) {
+		t.slave = true;
+	}
+	
 	char *debug_option = getOption(argv, argv + argc, "--debug");
 	if(debug_option != NULL) {
 		t.debug = true;

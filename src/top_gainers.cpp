@@ -1,5 +1,7 @@
 #include <iostream>
+#include <filesystem>
 #include <sstream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -8,9 +10,36 @@
 #include "top_gainers.h"
 #include "logger.h"
 
+#define TOP_GAINERS_LIST "/tmp/top_gainers"
+
 using namespace std;
 
+top_gainers::top_gainers() {
+	slave = false;
+}
+
 std::vector<std::string> * top_gainers::get(std::vector<std::string> black_listed_tickers) {
+	vector<std::string> * top_gainers = new vector<std::string>();
+	if(slave) {
+		if(!std::filesystem::exists(TOP_GAINERS_LIST)) {
+			return top_gainers;
+		}
+
+		std::fstream f(TOP_GAINERS_LIST);
+
+		std::string ticker;
+		while (f >> ticker) {
+			if(std::find(black_listed_tickers.begin(), black_listed_tickers.end(), ticker) == 
+				black_listed_tickers.end()) {
+				top_gainers->push_back(ticker);
+			}
+		}
+		return top_gainers;
+	}
+	return yget(black_listed_tickers);
+}
+
+std::vector<std::string> * top_gainers::yget(std::vector<std::string> black_listed_tickers) {
 	std::map<std::string, float> ticker_prices;
 
 	vector<std::string> * top_gainers = new vector<std::string>();
@@ -58,13 +87,19 @@ std::vector<std::string> * top_gainers::get(std::vector<std::string> black_liste
 		}
 	}
 
+	std::ofstream out(TOP_GAINERS_LIST);
+
 	for(std::map<std::string,float>::iterator it = ticker_prices.begin(); 
 		it != ticker_prices.end(); it++) {
 		if(it->second <= 20) {
 			log.log("%s -> %f", it->first.c_str(), it->second);	
   			top_gainers->push_back(it->first);
+			out << (it->first + "\n");
 		}
 	}
+
+	out.close();
+	slave = true; // Next time read from file.
 
 	return top_gainers->size() > 0 ? top_gainers : NULL;
 }

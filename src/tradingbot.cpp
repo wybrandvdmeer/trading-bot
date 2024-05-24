@@ -59,6 +59,10 @@ void tradingbot::trade(int top_gainers_idx) {
 		db.debug = true;
 	}
 
+	if(slave) {
+		tg.slave = true;
+	}
+
 	/* Back-testing against a db file. 
 	*/
 	if(!db_file.empty()) {

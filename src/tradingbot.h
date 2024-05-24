@@ -14,7 +14,7 @@ public:
 	tradingbot();
 	std::string ticker, db_file;
 	void trade(int top_gainer_idx);
-	bool force, debug, disable_alpaca;
+	bool force, debug, disable_alpaca, slave;
 private:
 	float prv_macd_signal_diff;
 	float sma_200;
