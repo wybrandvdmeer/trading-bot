@@ -20,8 +20,12 @@ top_gainers::top_gainers() {
 
 std::vector<std::string> * top_gainers::get() {
 	vector<std::string> * top_gainers = new vector<std::string>();
-	if(slave) {
-		std::string file = get_top_gainers_list_name();
+	std::string file = get_top_gainers_list_name();
+	bool exists = std::filesystem::exists(file);
+
+	log.log("File (%s) exists: (%d)", file.c_str(), exists);
+
+	if(exists || slave) {
 		if(!std::filesystem::exists(file)) {
 			return top_gainers;
 		}

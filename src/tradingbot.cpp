@@ -115,7 +115,7 @@ void tradingbot::trade(int top_gainers_idx) {
 
 		if(tradingbot::ticker.empty()) {
 			top_gainers = tg.get();
-			int tg_idx = get_top_gainer(top_gainers);
+			int tg_idx = get_top_gainer(top_gainers, black_listed_tickers, top_gainers_idx);
 			if(tg_idx == -1) { 
 				log.log("No top gainers.");
 			} else {
@@ -158,6 +158,22 @@ void tradingbot::trade(int top_gainers_idx) {
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(sleep * 1000));
 	}
+}
+
+int tradingbot::get_top_gainer(std::vector<std::string> * top_gainers, 
+	std::vector<std::string> black_listed_tickers, int top_gainers_idx) {
+
+	int idx=0;
+    for(auto t : *top_gainers) {
+		if(idx%3 == top_gainers_idx && 
+			std::find(black_listed_tickers.begin(), 
+			black_listed_tickers.end(), t) == black_listed_tickers.end()) {
+			return idx;
+		}
+		idx++;
+	}
+
+	return -1;
 }
 
 int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {

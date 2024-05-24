@@ -37,7 +37,8 @@ private:
 	void ema_test();
 	int find_position_of_last_day(std::vector<candle*> *candles);
 	bool in_openings_window(long current_time);
-
+	int get_top_gainer(std::vector<std::string> * top_gainers, 
+		std::vector<std::string> black_listed_tickers, int top_gainers_idx);
 	/* Trade parameters. */
 	float macd_set_point;
 	float get_macd_set_point(macd m, std::vector<candle*> *candles);
