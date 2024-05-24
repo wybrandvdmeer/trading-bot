@@ -10,7 +10,7 @@ public:
 	float get_signal(int offset);
 	float get_macd(int offset);
 	float get_histogram(int offset);
-	bool is_histogram_trend_positive(int length);
+	bool is_histogram_trending(int length, bool positive_trend);
 	std::vector<float> ema_12;
 	std::vector<float> ema_26;
 	std::vector<float> macd;

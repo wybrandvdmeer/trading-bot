@@ -206,7 +206,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(!ind.m.is_histogram_trend_positive(MACD_TREND_LENGTH)) {
+		if(!ind.m.is_histogram_trending(MACD_TREND_LENGTH, false)) {
 			log.log("sell: histogram trend is negative.");
 			bSell = true;
 		} else
