@@ -16,8 +16,7 @@ public:
 	void trade(int top_gainer_idx);
 	bool force, debug, disable_alpaca, slave;
 private:
-	float prv_macd_signal_diff;
-	float sma_200;
+	float sma_200, max_delta_close_sma_200;
 	top_gainers tg;
 	yahoo_api yahoo;
 	db_api db;

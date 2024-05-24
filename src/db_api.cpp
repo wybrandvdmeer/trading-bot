@@ -154,6 +154,30 @@ void db_api::open_position(position p) {
 	execDml(sql);
 }
 
+float db_api::select_max_delta_close_sma_200() {
+    open();
+    char sql[1000];
+
+    sprintf(sql, "SELECT MAX(close - IFNULL(sma_200,close)) FROM candles");
+
+    if(debug) {
+        log.log("%s", sql);
+    }
+
+    sqlite3_stmt * s = prepare(std::string(sql));
+    sqlite3_step(s);
+
+    if(sqlite3_data_count(s) == 0) {
+        close(s);
+        return 0;
+    }
+
+    float max_sma_200 = selectFloat(s, 0);
+
+    close(s);
+    return max_sma_200;
+}
+
 int db_api::select_no_of_positions() {
     open();
     char sql[1000];

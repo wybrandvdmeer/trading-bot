@@ -29,6 +29,9 @@ using namespace std;
 #define OPENINGS_WINDOW_IN_MIN 5
 #define QUALITY_CANDLES 0.9
 
+// Only buy when price has exceed sma + sma * SMA_RELATIVE_DISTANCE
+#define SMA_RELATIVE_DISTANCE 0.1
+
 /* 
 Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na bijv de 1e pull back.
 Trendfollowing: Identificeer op dag basis een trend en stap dan in aan het begin vd trend op basis
@@ -160,38 +163,6 @@ void tradingbot::trade(int top_gainers_idx) {
 	}
 }
 
-int tradingbot::get_top_gainer(std::vector<std::string> * top_gainers, 
-	std::vector<std::string> black_listed_tickers, int top_gainers_idx) {
-
-	int idx=0;
-    for(auto t : *top_gainers) {
-		if(idx%3 == top_gainers_idx && 
-			std::find(black_listed_tickers.begin(), 
-			black_listed_tickers.end(), t) == black_listed_tickers.end()) {
-			return idx;
-		}
-		idx++;
-	}
-
-	return -1;
-}
-
-int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
-	int idx=0, day_break_position=-1, first_day, prv_day=-1;
-    for(auto c : *candles) {
-    	first_day = gmtime(&(c->time))->tm_wday;
-        if(prv_day == -1) {
-        	prv_day = first_day;
-        } else
-       	if(prv_day != first_day) {
-        	day_break_position = idx;
-            prv_day = first_day;
-		}
-        idx++;
-	}
-	return day_break_position;
-}
-
 bool tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("\nEvaluating %s", ticker.c_str());
 
@@ -215,20 +186,23 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	}
 
 	sma_200 = ind.calculate_sma(200, close_prices);
+	max_delta_close_sma_200 = db.select_max_delta_close_sma_200() * SMA_RELATIVE_DISTANCE;
+	log.log("%.10f", db.select_max_delta_close_sma_200());
+	
 	ind.calculate_macd(close_prices);
 
 	float open_0 = current->open;
 	float close_0 = current->close;
 
-	log.log("(%s) - open/close: (%f,%f), sma200: %f, macd: %f, signal: %f, histogram: %f, ema(20): %f", 
+	log.log("(%s) - open/close: (%.4f,%.4f), sma200: %.4f, sma200-close-delta: %.4f, macd: %.4f, signal: %.4f, histogram: %.4f", 
 		date_to_time_string(current->time).c_str(),
 		open_0, 
 		close_0,
 		sma_200,
+		max_delta_close_sma_200,
 		ind.m.get_macd(0),
 		ind.m.get_signal(0),
-		ind.m.get_histogram(0),
-		ind.calculate_ema(20, close_prices));
+		ind.m.get_histogram(0));
 
 	bool finished_for_the_day = candle_in_nse_closing_window(current);
 	
@@ -289,8 +263,9 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	if(!ind.m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
 		log.log("no trade: not a positive trend");
 	} else 
-	if(close_0 < sma_200) {
-		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200);
+	if(close_0 < sma_200 + max_delta_close_sma_200) {
+		log.log("no trade: price (%f) is below sma200 (%f + %f).", close_0, sma_200, 
+			max_delta_close_sma_200);
 	} else
 	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + macd_set_point) {
 		log.log("no trade: macd(%f) is smaller then signal (%f).",
@@ -328,7 +303,6 @@ float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
 
 void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, float sma_200) {
 	db.insert_candles(ticker, candles, &ind.m, sma_200);
-	tradingbot::prv_macd_signal_diff = ind.m.get_macd(0);
 
 	/* When backtesting, dont throw away the candles. 
 	*/
@@ -490,4 +464,36 @@ void tradingbot::ema_test() {
 
 	log.log("%f", ind.calculate_ema(2, v));
 	exit(0);
+}
+
+int tradingbot::get_top_gainer(std::vector<std::string> * top_gainers, 
+	std::vector<std::string> black_listed_tickers, int top_gainers_idx) {
+
+	int idx=0;
+    for(auto t : *top_gainers) {
+		if(idx%3 == top_gainers_idx && 
+			std::find(black_listed_tickers.begin(), 
+			black_listed_tickers.end(), t) == black_listed_tickers.end()) {
+			return idx;
+		}
+		idx++;
+	}
+
+	return -1;
+}
+
+int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
+	int idx=0, day_break_position=-1, first_day, prv_day=-1;
+    for(auto c : *candles) {
+    	first_day = gmtime(&(c->time))->tm_wday;
+        if(prv_day == -1) {
+        	prv_day = first_day;
+        } else
+       	if(prv_day != first_day) {
+        	day_break_position = idx;
+            prv_day = first_day;
+		}
+        idx++;
+	}
+	return day_break_position;
 }
