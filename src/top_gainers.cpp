@@ -21,11 +21,12 @@ top_gainers::top_gainers() {
 std::vector<std::string> * top_gainers::get(std::vector<std::string> black_listed_tickers) {
 	vector<std::string> * top_gainers = new vector<std::string>();
 	if(slave) {
-		if(!std::filesystem::exists(TOP_GAINERS_LIST)) {
+		std::string file = get_top_gainers_list_name();
+		if(!std::filesystem::exists(file)) {
 			return top_gainers;
 		}
 
-		std::fstream f(TOP_GAINERS_LIST);
+		std::fstream f(file);
 
 		std::string ticker;
 		while (f >> ticker) {
@@ -87,7 +88,7 @@ std::vector<std::string> * top_gainers::yget(std::vector<std::string> black_list
 		}
 	}
 
-	std::ofstream out(TOP_GAINERS_LIST);
+	std::ofstream out(get_top_gainers_list_name());
 
 	for(std::map<std::string,float>::iterator it = ticker_prices.begin(); 
 		it != ticker_prices.end(); it++) {
@@ -104,6 +105,20 @@ std::vector<std::string> * top_gainers::yget(std::vector<std::string> black_list
 	return top_gainers->size() > 0 ? top_gainers : NULL;
 }
 
+std::string top_gainers::get_top_gainers_list_name() {
+	std::time_t time = std::time(0);
+
+	struct tm *t = localtime(&time);
+	char buf[1000];
+	sprintf(buf, "%s-%d%02d%02d", 
+		TOP_GAINERS_LIST,
+		t->tm_year + 1900, 
+		t->tm_mon + 1, 
+		t->tm_mday
+		);
+
+	return std::string(buf);
+}
 std::vector<std::string> top_gainers::split(const std::string &s) {
     std::stringstream ss(s);
     std::string item;

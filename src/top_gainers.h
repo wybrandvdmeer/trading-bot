@@ -17,6 +17,7 @@ private:
 	download dl;
 	std::vector<std::string> split(const std::string &s);
 	std::vector<std::string> * yget(std::vector<std::string> black_listed_tickers);
+	std::string get_top_gainers_list_name();
 };
 
 #endif
