@@ -24,14 +24,12 @@ float macd::get_histogram(int offset) {
 	return get_macd(offset) - get_signal(offset);
 }
 
-bool macd::is_histogram_trend_negative(int offset, int length) {
-	bool up=false;
-	float x=get_histogram(offset);
-	for(int idx=1; idx < length; idx++) {
-		up = x > get_histogram(offset + idx);
-		x = get_histogram(offset + idx);
+bool macd::is_histogram_trend_positive(int length) {
+	bool up=true;
+	for(int idx=0; up && idx < length && idx < macd.size() - 1; idx++) {
+		up = get_histogram(idx) > get_histogram(idx + 1);
 	}
 
-	return !up;
+	return up;
 }
 

@@ -191,7 +191,8 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	float open_0 = current->open;
 	float close_0 = current->close;
 
-	log.log("open/close: (%f,%f), sma200: %f, macd: %f, signal: %f, histogram: %f, ema(20): %f", 
+	log.log("(%s) - open/close: (%f,%f), sma200: %f, macd: %f, signal: %f, histogram: %f, ema(20): %f", 
+		date_to_time_string(current->time).c_str(),
 		open_0, 
 		close_0,
 		sma_200,
@@ -205,7 +206,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(ind.m.is_histogram_trend_negative(0, MACD_TREND_LENGTH)) {
+		if(!ind.m.is_histogram_trend_positive(MACD_TREND_LENGTH)) {
 			log.log("sell: histogram trend is negative.");
 			bSell = true;
 		} else
@@ -251,24 +252,20 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		return finished_for_the_day;
 	}
 
+	if(candle_in_openings_pause(current)) {
+		log.log("no trade: Candle is still in openings pause."); 
+	} else
 	if(ind.m.macd.size() > 0 && 
 		ind.m.get_histogram(0) < ind.m.get_histogram(1)) {
-			log.log("(%s) no trade: prv histogram (%f) is greater then current histogram (%f).",
-				date_to_time_string(current->time).c_str(), 
+			log.log("no trade: prv histogram (%f) is greater then current histogram (%f).",
 				ind.m.get_histogram(1),
 				ind.m.get_histogram(0));
 	} else
 	if(close_0 < sma_200) {
-		log.log("(%s) no trade: price (%f) is below sma200 (%f).", 
-			date_to_time_string(current->time).c_str(), close_0, sma_200);
-	} else
-	if(candle_in_openings_pause(current)) {
-		log.log("(%s) no trade: Candle is still in openings pause.", 
-			date_to_time_string(current->time).c_str());
+		log.log("no trade: price (%f) is below sma200 (%f).", close_0, sma_200);
 	} else
 	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + macd_set_point) {
-		log.log("(%s) no trade: macd(%f) is smaller then signal (%f).",
-			date_to_time_string(current->time).c_str(), 
+		log.log("no trade: macd(%f) is smaller then signal (%f).",
 			ind.m.get_macd(0), 
 			ind.m.get_signal(0));
 	} else {
