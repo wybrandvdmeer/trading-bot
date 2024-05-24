@@ -158,7 +158,7 @@ float db_api::select_max_delta_close_sma_200() {
     open();
     char sql[1000];
 
-    sprintf(sql, "SELECT MAX(close - IFNULL(sma_200,close)) FROM candles");
+    sprintf(sql, "SELECT MAX(close - sma_200) FROM candles WHERE sma_200 IS NOT NULL");
 
     if(debug) {
         log.log("%s", sql);
