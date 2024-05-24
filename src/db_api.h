@@ -26,7 +26,7 @@ public:
 	void close_position(position p);
 	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m, float sma_200);
 	std::vector<candle*> *get_candles(std::string db_file);
-	std::vector<position*> *get_positions();
+	std::vector<position*> *get_closed_positions();
 	float select_max_delta_close_sma_200();
 private:
 	long max_candle_time;

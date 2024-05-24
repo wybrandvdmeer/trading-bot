@@ -90,7 +90,7 @@ void tradingbot::trade(int top_gainers_idx) {
 			}
 		}
 
-		std::vector<position*> * positions = db.get_positions();
+		std::vector<position*> * positions = db.get_closed_positions();
 		int no_of_stocks=0;
 		float gain=0;
 		for(auto p : *positions) {

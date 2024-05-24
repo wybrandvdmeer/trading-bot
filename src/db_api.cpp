@@ -17,7 +17,7 @@ db_api::db_api() {
 	max_candle_time = 0L;
 }
 
-std::vector<position*> * db_api::get_positions() {
+std::vector<position*> * db_api::get_closed_positions() {
 	char sql[1000];
 	std::vector<position*> *positions = new std::vector<position*>();
 
@@ -26,7 +26,7 @@ std::vector<position*> * db_api::get_positions() {
 	read_only=false;
 
 	sprintf(sql, "SELECT ticker, buy_time, sell_time, no_of_stocks, stock_price, sell_price \
-		FROM positions ORDER BY id");
+		FROM positions WHERE sell_time IS NOT NULL ORDER BY id");
 
 	if(debug) {
 		log.log("%s", sql);
