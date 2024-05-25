@@ -80,6 +80,7 @@ void tradingbot::trade(int top_gainers_idx) {
 		std::vector<candle*> *candles = db.get_candles(db_file);
 
 		int day_break_position = find_position_of_last_day(candles);
+
 		time_of_prv_candle = candles->at(day_break_position - 1)->time;
 
 		for(int idx=day_break_position + 1; idx < candles->size(); idx++) {
@@ -87,6 +88,7 @@ void tradingbot::trade(int top_gainers_idx) {
 			for(int idx2=0; idx2 < idx; idx2++) {
 				v->push_back(candles->at(idx2));
 			}
+
 			if(trade(v)) {
 				break;
 			}
@@ -182,7 +184,16 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		}
 	}
 
-	std::sort(candles->begin(), candles->end()); // Yahoo can deliver unsorted candles.
+	std::sort(candles->begin(), candles->end(), candle_cmp);
+
+	std::vector<float> close_prices;
+	for(auto c : *candles) {
+		close_prices.push_back(c->close);
+	}
+
+	sma_200 = ind.calculate_sma(200, close_prices);
+	ind.calculate_macd(close_prices);
+	max_delta_close_sma_200 = db.select_max_delta_close_sma_200() * SMA_RELATIVE_DISTANCE;
 
 	for(auto c : *candles) {
 		if(c->time > time_of_prv_candle) {
@@ -192,6 +203,8 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 			time_of_prv_candle = c->time;
 		}
 	}
+
+	finish(candles);
 	return false;
 }
 
@@ -199,16 +212,6 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles) {
 	log.log("\nEvaluating %s", ticker.c_str());
 
 	candle * current = candles->at(candles->size() - 1);
-
-	std::vector<float> close_prices;
-	for(auto c : *candles) {
-		close_prices.push_back(c->close);
-	}
-
-	sma_200 = ind.calculate_sma(200, close_prices);
-	max_delta_close_sma_200 = db.select_max_delta_close_sma_200() * SMA_RELATIVE_DISTANCE;
-	
-	ind.calculate_macd(close_prices);
 
 	float open_0 = current->open;
 	float close_0 = current->close;
@@ -271,7 +274,6 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles) {
 			macd_set_point = get_macd_set_point(ind.m, candles);
 		}
 
-		finish(ticker, candles, sma_200, NULL);
 		return finished_for_the_day;
 	}
 
@@ -301,7 +303,6 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles) {
 		}
 	}
 
-	finish(ticker, candles, sma_200, NULL);
 	return false;
 }
 
@@ -321,9 +322,8 @@ float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
 	return RELATIVE_HIST * max_hist;
 }
 
-void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, 
-		float sma_200, float * custom_ind1) {
-	db.insert_candles(ticker, candles, &ind.m, sma_200, custom_ind1);
+void tradingbot::finish(std::vector<candle*> * candles) {
+	db.insert_candles(ticker, candles, &ind.m, sma_200, &custom_ind1);
 
 	/* When backtesting, dont throw away the candles. 
 	*/
@@ -389,16 +389,16 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 		return false;
 	}
 
-	float non_valid_candles=0;
+	int non_valid_candles=0;
 	for(auto c : *candles) {
 		if(!c->is_valid()) {
 			non_valid_candles++;
 		}
 	}
 
-	float quality = (candles->size() - non_valid_candles)/candles->size();
+	float quality = ((float)(candles->size() - non_valid_candles))/candles->size();
 
-	log.log("Q: %f, noOfCandles: %ld, noOfNonValidCandles: %f", 
+	log.log("Q: %f, noOfCandles: %ld, noOfNonValidCandles: %d", 
 		quality, candles->size() , non_valid_candles);
 	
 	return quality >= QUALITY_CANDLES;
@@ -528,3 +528,4 @@ int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
 	}
 	return day_break_position;
 }
+

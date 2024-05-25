@@ -16,7 +16,7 @@ public:
 	void trade(int top_gainer_idx);
 	bool force, debug, disable_alpaca, slave;
 private:
-	float sma_200, max_delta_close_sma_200, macd_set_point;
+	float sma_200, max_delta_close_sma_200, macd_set_point, custom_ind1;
 	int time_of_prv_candle;
 	top_gainers tg;
 	yahoo_api yahoo;
@@ -32,7 +32,7 @@ private:
 	void buy(std::string ticker, float stock_price, long buy_time);
 	void sell(position * p);
 	bool get_quality_candles(std::vector<candle*> *candles);
-	void finish(std::string ticker, std::vector<candle*> *candles, float sma_200, float *custom_ind1);
+	void finish(std::vector<candle*> *candles);
 	std::string date_to_string(long ts);
 	std::string date_to_time_string(long ts);
 	void ema_test();
@@ -43,5 +43,9 @@ private:
 	float get_macd_set_point(macd m, std::vector<candle*> *candles);
 	int get_gmt_midnight();
 };
+
+bool candle_cmp(candle * c1, candle * c2) { 
+	return c1->time < c2->time;
+}
 
 #endif

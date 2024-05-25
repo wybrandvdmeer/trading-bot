@@ -22,8 +22,3 @@ candle::candle(
 bool candle::is_valid() {
 	return open > 0 && close > 0;
 }
-
-bool candle::operator <(const candle& rhs) const {
-    return this->time - rhs.time < 0;
-}
-
