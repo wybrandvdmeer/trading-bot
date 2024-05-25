@@ -78,7 +78,7 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 }
 	
 void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m, 
-	float sma_200) {	
+	float sma_200, float * custom_ind1) {	
 	int idx=0;
 
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end(); it++, idx++) {
@@ -92,13 +92,24 @@ void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, 
 	}
 
 	// sma value is only calculated for the last candle.
-	update_sma_200(candles->at(candles->size() - 1), sma_200);
+	update_indicators(candles->at(candles->size() - 1), sma_200, custom_ind1);
 }
 
-void db_api::update_sma_200(candle *c, float sma_200) {
-	open();
+void db_api::update_indicators(candle *c, float sma_200, float * custom_ind1) {
 	char sql[1000];
-	sprintf(sql, "UPDATE candles SET sma_200 = %f WHERE time = %ld", sma_200, c->time);
+	char sql2[100];
+
+	if(custom_ind1 != NULL) {
+		sprintf(sql2, ", custom_ind1 = %f", * custom_ind1);
+	} else {
+		sprintf(sql2, " ");
+	}
+
+	open();
+	sprintf(sql, "UPDATE candles SET sma_200 = %f %s WHERE time = %ld", 
+		sma_200, 
+		sql2,
+		c->time);
 	if(debug) {
 		log.log("%s", sql);
 	}
@@ -352,7 +363,8 @@ void db_api::create_schema() {
 		sell_off_price REAL, loss_limit_price REAL, stop_loss_activated INTEGER)", true);
 	open();
 	execDml("CREATE TABLE candles (id INTEGER NOT NULL, ticker VARCHAR(10), time INTEGER, open REAL, \
-			close REAL, low REAL, high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL)", 
+			close REAL, low REAL, high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL, \
+			custom_ind1 REAL)", 
 			true);
 }
 

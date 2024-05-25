@@ -259,7 +259,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 			macd_set_point = get_macd_set_point(ind.m, candles);
 		}
 
-		finish(ticker, candles, sma_200);
+		finish(ticker, candles, sma_200, NULL);
 		return finished_for_the_day;
 	}
 
@@ -289,7 +289,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		}
 	}
 
-	finish(ticker, candles, sma_200);
+	finish(ticker, candles, sma_200, NULL);
 	return false;
 }
 
@@ -309,8 +309,9 @@ float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
 	return RELATIVE_HIST * max_hist;
 }
 
-void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, float sma_200) {
-	db.insert_candles(ticker, candles, &ind.m, sma_200);
+void tradingbot::finish(std::string ticker, std::vector<candle*> * candles, 
+		float sma_200, float * custom_ind1) {
+	db.insert_candles(ticker, candles, &ind.m, sma_200, custom_ind1);
 
 	/* When backtesting, dont throw away the candles. 
 	*/

@@ -24,7 +24,8 @@ public:
 	position * get_open_position(std::string ticker);
 	void open_position(position p);
 	void close_position(position p);
-	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m, float sma_200);
+	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m, 
+		float sma_200, float * custom_ind1);
 	std::vector<candle*> *get_candles(std::string db_file);
 	std::vector<position*> *get_closed_positions();
 	float select_max_delta_close_sma_200();
@@ -46,7 +47,7 @@ private:
 	void get_date(std::string &s);
 	std::string get_data_file();
 	std::string get_data_file(bool uri);
-	void update_sma_200(candle *c, float sma_200);
+	void update_indicators(candle *c, float sma_200, float * custom_ind1);
 	int select_no_of_rows_of_table(std::string table);
 	logger log;
 	bool read_only;
