@@ -192,6 +192,7 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	}
 
 	sma_200 = ind.calculate_sma(200, close_prices);
+	custom_ind1 = ind.calculate_sma(50, close_prices);
 	ind.calculate_macd(close_prices);
 	max_delta_close_sma_200 = db.select_max_delta_close_sma_200() * SMA_RELATIVE_DISTANCE;
 

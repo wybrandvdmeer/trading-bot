@@ -2,11 +2,24 @@
 
 import sqlite3
 import pandas as pd
-import sys
 import finplot as fplt
 from datetime import datetime, timedelta
 from dateutil.tz import gettz
 import argparse
+
+
+def fill_init_values(open, lst):
+    lst = [x for x in lst if x is not None]
+    if len(lst) == 0:
+        init_value = 0
+    else:
+        init_value = lst[0]
+
+    for i in range(0, len(open) - len(lst)):
+        lst.insert(0, init_value)
+
+    return lst
+
 
 days = 0
 
@@ -21,7 +34,7 @@ if ticker is not None:
     ticker = ticker.upper()
 
 if args.days != None:
-	days = args.days
+    days = args.days
 
 db_file = args.db_file
 dt = datetime.today() - timedelta(days=days)
@@ -37,7 +50,7 @@ if ticker is None:
     csr.execute("SELECT DISTINCT ticker FROM candles")
     ticker = csr.fetchone()[0]
 
-sql = "SELECT time, open, close, high, low, macd, signal, sma_200 FROM candles where ticker = '" + ticker + "' ORDER BY time"
+sql = "SELECT time, open, close, high, low, macd, signal, sma_200, custom_ind1 FROM candles where ticker = '" + ticker + "' ORDER BY time"
 csr.execute(sql)
 
 time = []
@@ -48,6 +61,7 @@ high = []
 mac_d = []
 signal = []
 sma_200 = []
+custom_ind1 = []
 
 fplt.display_timezone = gettz('US/Eastern')
 
@@ -63,6 +77,7 @@ for row in csr:
     mac_d.append(row[5])
     signal.append(row[6])
     sma_200.append(row[7])
+    custom_ind1.append(row[8])
     time.append(datetime.utcfromtimestamp(row[0]))
 
 if len(open) == 0:
@@ -73,15 +88,8 @@ if len(open) == 0:
 # sma-200 is only filed in the candles which were involved in the simulation.
 #
 
-sma_200 = [x for x in sma_200 if x is not None]
-
-if len(sma_200) == 0:
-	init_value = 0
-else:
-	init_value = sma_200[0]
-
-for i in range(0, len(open) - len(sma_200)):
-    sma_200.insert(0, init_value)
+sma_200 = fill_init_values(open, sma_200)
+custom_ind1 = fill_init_values(open, custom_ind1)
 
 stock_prices = pd.DataFrame({'datetime': time, 'open': open, 'close': close, 'high': high, 'low': low})
 stock_prices = stock_prices.set_index('datetime')
@@ -115,8 +123,8 @@ for row in csr:
 conn.close()
 
 positions = pd.DataFrame(
-    {'ids': ids, 'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price, 
-		'sell_price': sell_price, 'no_of_stocks': no_of_stocks})
+    {'ids': ids, 'buy_time': buy_time, 'sell_time': sell_time, 'buy_price': buy_price,
+     'sell_price': sell_price, 'no_of_stocks': no_of_stocks})
 positions['gain'] = positions['no_of_stocks'] * (positions['sell_price'] - positions['buy_price'])
 gain = positions['gain'].sum()
 no_of_stocks = positions['no_of_stocks'].sum()
@@ -127,6 +135,7 @@ fplt.plot(mac_d, ax=ax2, legend='MACD')
 fplt.plot(signal, ax=ax2, legend='Signal')
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
 fplt.plot(sma_200, ax=ax, legend='SMA-200')
+fplt.plot(custom_ind1, ax=ax, legend='custom_ind1')
 
 print(positions)
 
@@ -143,7 +152,7 @@ for index, row in positions.iterrows():
 
     line = fplt.add_line((x1, y1), (x2, y2), color='#9900ff', interactive=True)
 
-    txt = 'id: ' + str(id) +' buy: ' + str(y1) + ' sell: ' + str(y2) + ' gain/stock: ' + "{:.2f}".format(y2 - y1)
+    txt = 'id: ' + str(id) + ' buy: ' + str(y1) + ' sell: ' + str(y2) + ' gain/stock: ' + "{:.2f}".format(y2 - y1)
     fplt.add_text((x1, y1), txt, color='#bd7700', ax=ax)
 
 conn.close()
