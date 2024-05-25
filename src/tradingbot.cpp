@@ -50,6 +50,7 @@ tradingbot::tradingbot() {
 	tradingbot::debug = false;
 	tradingbot::disable_alpaca = false;
 	tradingbot::macd_set_point = 0;
+	tradingbot::time_of_prv_candle = 0;
 }
 
 void tradingbot::trade(int top_gainers_idx) {
@@ -174,6 +175,13 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		log.log("Received a non valid candle.");
 		return false;
 	}
+
+	if(time_of_prv_candle >= current->time) {
+		log.log("Received a candle from the past.");
+		return false;
+	}
+	
+	time_of_prv_candle = current->time;
 
 	std::vector<float> close_prices;
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end();) {

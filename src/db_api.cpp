@@ -111,10 +111,13 @@ void db_api::insert_candle(std::string ticker, candle *c, float macd, float sign
 		return;
 	}
 
+	int no_of_candles = select_no_of_rows_of_table("candles");
+
 	open();
 	char sql[1000];
-	sprintf(sql, "INSERT INTO candles(ticker, time, open, close, low, high, volume, macd, signal) \
-		VALUES('%s', %ld, %.16f, %.16f, %.16f, %.16f, %ld, %f, %f)", 
+	sprintf(sql, "INSERT INTO candles(id, ticker, time, open, close, low, high, volume, macd, signal) \
+		VALUES(%d, '%s', %ld, %.16f, %.16f, %.16f, %.16f, %ld, %f, %f)",
+		no_of_candles + 1,
 		ticker.c_str(), 
 		c->time, 
 		c->open,
@@ -137,7 +140,7 @@ void db_api::close_position(position p) {
 }
 
 void db_api::open_position(position p) {
-	int no_of_positions = select_no_of_positions();
+	int no_of_positions = select_no_of_rows_of_table("positions");
 	open();
 	char sql[1000];
 	sprintf(sql, 
@@ -178,11 +181,11 @@ float db_api::select_max_delta_close_sma_200() {
     return max_sma_200;
 }
 
-int db_api::select_no_of_positions() {
+int db_api::select_no_of_rows_of_table(std::string table) {
     open();
     char sql[1000];
 
-    sprintf(sql, "SELECT COUNT(*) FROM positions");
+    sprintf(sql, "SELECT COUNT(*) FROM %s", table.c_str());
 
     if(debug) {
         log.log("%s", sql);
@@ -307,7 +310,6 @@ void db_api::open(std::string db_file) {
 	}
 }
 
-
 void db_api::close() {
 	close(NULL);
 }
@@ -349,8 +351,9 @@ void db_api::create_schema() {
 		sell_time INTEGER, no_of_stocks INTEGER, stock_price REAL, sell_price REAL, \
 		sell_off_price REAL, loss_limit_price REAL, stop_loss_activated INTEGER)", true);
 	open();
-	execDml("CREATE TABLE candles (ticker VARCHAR(10), time INTEGER, open REAL, close REAL, low REAL, \
-			 high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL)", true);
+	execDml("CREATE TABLE candles (id INTEGER NOT NULL, ticker VARCHAR(10), time INTEGER, open REAL, \
+			close REAL, low REAL, high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL)", 
+			true);
 }
 
 sqlite3_stmt * db_api::prepare(std::string sql) {

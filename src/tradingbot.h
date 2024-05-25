@@ -16,7 +16,8 @@ public:
 	void trade(int top_gainer_idx);
 	bool force, debug, disable_alpaca, slave;
 private:
-	float sma_200, max_delta_close_sma_200;
+	float sma_200, max_delta_close_sma_200, macd_set_point;
+	int time_of_prv_candle;
 	top_gainers tg;
 	yahoo_api yahoo;
 	db_api db;
@@ -38,8 +39,6 @@ private:
 	bool in_openings_window(long current_time);
 	int get_top_gainer(std::vector<std::string> * top_gainers, 
 		std::vector<std::string> black_listed_tickers, int top_gainers_idx);
-	/* Trade parameters. */
-	float macd_set_point;
 	float get_macd_set_point(macd m, std::vector<candle*> *candles);
 };
 

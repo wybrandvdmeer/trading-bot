@@ -47,7 +47,7 @@ private:
 	std::string get_data_file();
 	std::string get_data_file(bool uri);
 	void update_sma_200(candle *c, float sma_200);
-	int select_no_of_positions();
+	int select_no_of_rows_of_table(std::string table);
 	logger log;
 	bool read_only;
 };
