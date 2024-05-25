@@ -198,28 +198,26 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 
 	for(auto c : *candles) {
 		if(c->time > time_of_prv_candle) {
-			if(trade_on_candle(candles)) {
+			if(trade_on_candle(c)) {
 				return true;
 			}
 			time_of_prv_candle = c->time;
 		}
 	}
+		
+	macd_set_point = get_macd_set_point(ind.m, candles);
 
 	finish(candles);
 	return false;
 }
 
-bool tradingbot::trade_on_candle(std::vector<candle*> *candles) {
-	log.log("\nEvaluating %s", ticker.c_str());
-
-	candle * current = candles->at(candles->size() - 1);
-
-	float open_0 = current->open;
-	float close_0 = current->close;
+bool tradingbot::trade_on_candle(candle *candle) {
+	float open_0 = candle->open;
+	float close_0 = candle->close;
 
 	log.log("(%ld -> %s) - open/close: (%.5f,%.5f), sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
-		current->time,
-		date_to_time_string(current->time).c_str(),
+		candle->time,
+		date_to_time_string(candle->time).c_str(),
 		open_0, 
 		close_0,
 		sma_200,
@@ -228,7 +226,7 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles) {
 		ind.m.get_signal(0),
 		ind.m.get_histogram(0));
 
-	bool finished_for_the_day = candle_in_nse_closing_window(current);
+	bool finished_for_the_day = candle_in_nse_closing_window(candle);
 	
 	position * p = db.get_open_position(ticker);
 	if(p != NULL) {
@@ -268,11 +266,9 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles) {
 			if(db_file.empty()) {
 				p->sell = time(0);
 			} else {
-				p->sell = current->time;
+				p->sell = candle->time;
 			}
 			sell(p);
-		
-			macd_set_point = get_macd_set_point(ind.m, candles);
 		}
 
 		return finished_for_the_day;
@@ -280,7 +276,7 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles) {
 
 	/* Buy logic. 
 	*/
-	if(in_openings_window(current->time)) { // for back-testing.
+	if(in_openings_window(candle->time)) { // for back-testing.
  		log.log("no trade: Candle is still in openings window."); 
 	} else
 	if(!ind.m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
@@ -300,7 +296,7 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles) {
 		if(db_file.empty()) {
 			buy(ticker, close_0, time(0));
 		} else {
-			buy(ticker, close_0, current->time);
+			buy(ticker, close_0, candle->time);
 		}
 	}
 
