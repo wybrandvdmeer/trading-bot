@@ -80,6 +80,7 @@ void tradingbot::trade(int top_gainers_idx) {
 		std::vector<candle*> *candles = db.get_candles(db_file);
 
 		int day_break_position = find_position_of_last_day(candles);
+		time_of_prv_candle = candles->at(day_break_position - 1)->time;
 
 		for(int idx=day_break_position + 1; idx < candles->size(); idx++) {
 			std::vector<candle*> * v = new std::vector<candle*>();
@@ -149,6 +150,12 @@ void tradingbot::trade(int top_gainers_idx) {
 						db.create_schema();
 						schema_created = true;
 					}
+
+					time_of_prv_candle = db.select_max_candle_time();
+					if(time_of_prv_candle == 0) {
+						time_of_prv_candle = get_gmt_midnight();
+					}
+
 					/* True -> finished for the day. 
 					*/
 					if(trade(candles)) {
@@ -165,44 +172,49 @@ void tradingbot::trade(int top_gainers_idx) {
 }
 
 bool tradingbot::trade(std::vector<candle*> *candles) {
-	log.log("\nEvaluating %s", ticker.c_str());
-
-	candle * current = candles->at(candles->size() - 1);
-
-	/* Skip non valid candle. 
-	*/
-	if(!current->is_valid()) {
-		log.log("Received a non valid candle.");
-		return false;
-	}
-
-	if(time_of_prv_candle >= current->time) {
-		log.log("Received a candle from the past.");
-		return false;
-	}
-	
-	time_of_prv_candle = current->time;
-
-	std::vector<float> close_prices;
+	/* Delete non valid candles. 
+	*/	
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end();) {
 		if((*it)->is_valid()) {
-			close_prices.push_back((*it)->close);
 			it++;
 		} else {
 			candles->erase(it);
 		}
 	}
 
+	std::sort(candles->begin(), candles->end()); // Yahoo can deliver unsorted candles.
+
+	for(auto c : *candles) {
+		if(c->time > time_of_prv_candle) {
+			if(trade_on_candle(candles)) {
+				return true;
+			}
+			time_of_prv_candle = c->time;
+		}
+	}
+	return false;
+}
+
+bool tradingbot::trade_on_candle(std::vector<candle*> *candles) {
+	log.log("\nEvaluating %s", ticker.c_str());
+
+	candle * current = candles->at(candles->size() - 1);
+
+	std::vector<float> close_prices;
+	for(auto c : *candles) {
+		close_prices.push_back(c->close);
+	}
+
 	sma_200 = ind.calculate_sma(200, close_prices);
 	max_delta_close_sma_200 = db.select_max_delta_close_sma_200() * SMA_RELATIVE_DISTANCE;
-	log.log("%.10f", db.select_max_delta_close_sma_200());
 	
 	ind.calculate_macd(close_prices);
 
 	float open_0 = current->open;
 	float close_0 = current->close;
 
-	log.log("(%s) - open/close: (%.4f,%.4f), sma200: %.4f, sma200-close-delta: %.4f, macd: %.4f, signal: %.4f, histogram: %.4f", 
+	log.log("(%ld -> %s) - open/close: (%.5f,%.5f), sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
+		current->time,
 		date_to_time_string(current->time).c_str(),
 		open_0, 
 		close_0,
@@ -449,6 +461,16 @@ bool tradingbot::in_openings_window(long current_time) {
 	current_time = current_time%(24 * 3600);
 
 	return ts <= current_time && current_time < ts + OPENINGS_WINDOW_IN_MIN * 60;
+}
+
+int tradingbot::get_gmt_midnight() {
+	time_t now = time(NULL);
+	struct tm *tm_struct = gmtime(&now);
+
+	tm_struct->tm_hour = 0;
+	tm_struct->tm_min = 0;
+	tm_struct->tm_sec = 0;
+	return timegm(tm_struct);
 }
 
 std::string tradingbot::date_to_string(long ts) {

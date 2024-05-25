@@ -29,6 +29,7 @@ public:
 	std::vector<candle*> *get_candles(std::string db_file);
 	std::vector<position*> *get_closed_positions();
 	float select_max_delta_close_sma_200();
+	int select_max_candle_time();
 private:
 	long max_candle_time;
 	sqlite3 * db;

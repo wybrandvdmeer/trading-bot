@@ -26,6 +26,7 @@ private:
 	alpaca_api alpaca;
 	std::vector<std::string> black_listed_tickers;
 	bool trade(std::vector<candle*> * candles);
+	bool trade_on_candle(std::vector<candle*> * candles);
 	bool nse_is_open();
 	bool candle_in_nse_closing_window(candle * c);
 	void buy(std::string ticker, float stock_price, long buy_time);
@@ -40,6 +41,7 @@ private:
 	int get_top_gainer(std::vector<std::string> * top_gainers, 
 		std::vector<std::string> black_listed_tickers, int top_gainers_idx);
 	float get_macd_set_point(macd m, std::vector<candle*> *candles);
+	int get_gmt_midnight();
 };
 
 #endif

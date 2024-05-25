@@ -56,7 +56,7 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 	open(db_file);
 	read_only=false;
 
-	sprintf(sql, "SELECT time, open, close, low, high, volume FROM candles ORDER BY time");
+	sprintf(sql, "SELECT time, open, close, low, high, volume FROM candles ORDER BY time DESC");
 	if(debug) {
 		log.log("%s", sql);
 	}
@@ -190,6 +190,30 @@ float db_api::select_max_delta_close_sma_200() {
 
     close(s);
     return max_sma_200;
+}
+
+int db_api::select_max_candle_time() {
+    open();
+    char sql[1000];
+
+    sprintf(sql, "SELECT MAX(time) FROM candles");
+
+    if(debug) {
+        log.log("%s", sql);
+    }
+
+    sqlite3_stmt * s = prepare(std::string(sql));
+    sqlite3_step(s);
+
+    if(sqlite3_data_count(s) == 0) {
+        close(s);
+        return 0;
+    }
+
+    int max = selectInt(s, 0);
+
+    close(s);
+    return max;
 }
 
 int db_api::select_no_of_rows_of_table(std::string table) {
