@@ -78,7 +78,7 @@ void indicators::calculate_sma(int no_of_days, std::vector<float> prices, std::v
 		int idx=0;
 		float sma=0;
 		for(vector<float>::iterator it = prices.begin() + begin; it != prices.end(); it++) {
-			if(idx > day - begin) {
+			if(idx >= day - begin) {
 				break;
 			}
 
