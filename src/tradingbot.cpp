@@ -291,8 +291,11 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles, candle *candle) 
  		log.log("no trade: Candle is still in openings window."); 
 	} else
 	if(!ind.m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
-		log.log("no trade: not a positive trend");
+		log.log("no trade: not a positive trend on the macd histogram.");
 	} else 
+	if(!ind.is_sma_50_200_diff_trending(3, true)) {
+		log.log("no trade: not a positive trend on the sma-50/200 indicators.");
+	}
 	if(close_0 < ind.get_sma_200(0) + max_delta_close_sma_200) {
 		log.log("no trade: price (%f) is below sma200 (%f + %f).", close_0, ind.get_sma_200(0), 
 			max_delta_close_sma_200);

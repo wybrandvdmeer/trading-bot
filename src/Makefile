@@ -44,8 +44,11 @@ yahoo_api.o: yahoo_api.cpp yahoo_api.h stock.h
 
 install_py:
 	sudo cp get_candles.py /usr/bin/get_candles
+	sudo cp calculate_gain.py /usr/bin/calculate_gain
 	sudo chmod 644 /usr/bin/get_candles
 	sudo chmod +x /usr/bin/get_candles
+	sudo chmod 644 /usr/bin/calculate_gain
+	sudo chmod +x /usr/bin/calculate_gain
 
 install: clean $(EXE) 
 	sudo cp tb /usr/bin

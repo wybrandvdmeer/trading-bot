@@ -93,3 +93,20 @@ float indicators::get_sma_50(int offset) {
 	return sma_50.at(sma_50.size() - offset - 1);
 }
 
+float indicators:: get_sma_diff_50_200(int offset) {
+	return get_sma_50(offset) - get_sma_200(offset);
+}
+
+bool indicators::is_sma_50_200_diff_trending(int length, bool positive_trend) {
+	for(int idx=0; idx < length && idx < sma_50.size() - 1; idx++) {
+		if(positive_trend && get_sma_diff_50_200(idx) < get_sma_diff_50_200(idx + 1)) {
+			return false;
+		}
+		if(!positive_trend && get_sma_diff_50_200(idx) > get_sma_diff_50_200(idx + 1)) {
+			return false;
+		} 
+	}
+
+	return true;
+}
+

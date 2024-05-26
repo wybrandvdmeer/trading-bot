@@ -19,7 +19,9 @@ public:
 	void calculate_sma_50(std::vector<float> prices);
 	float get_sma_200(int offset);
 	float get_sma_50(int offset);
+	float get_sma_diff_50_200(int offset);
 	void reset(std::string ticker);
+	bool is_sma_50_200_diff_trending(int length, bool positive_trend);
 private:
 	std::string ticker;
 	void calculate_ema(int no_of_days, std::vector<float> prices, std::vector<float> * emas);
