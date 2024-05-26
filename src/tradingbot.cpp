@@ -194,13 +194,12 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 		close_prices.push_back(c->close);
 	}
 
-	ind.sma_200 = ind.calculate_sma(200, close_prices);
-	float ci = ind.calculate_sma(50, close_prices);
-	ind.custom_ind[0] = &ci;
-	float ci2 = ind.calculate_ema(100, close_prices);
-	ind.custom_ind[1] = &ci2;
+	ind.custom_ind[0] = NULL;
+	ind.custom_ind[1] = NULL;
 	ind.custom_ind[2] = NULL;
 
+	ind.reset(ticker);
+	ind.calculate_sma_200(close_prices);
 	ind.calculate_macd(close_prices);
 	max_delta_close_sma_200 = db.select_max_delta_close_sma_200() * SMA_RELATIVE_DISTANCE;
 
@@ -226,7 +225,7 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles, candle *candle) 
 		date_to_time_string(candle->time).c_str(),
 		open_0, 
 		close_0,
-		ind.sma_200,
+		ind.get_sma_200(0),
 		max_delta_close_sma_200,
 		ind.m.get_macd(0),
 		ind.m.get_signal(0),
@@ -290,8 +289,8 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles, candle *candle) 
 	if(!ind.m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
 		log.log("no trade: not a positive trend");
 	} else 
-	if(close_0 < ind.sma_200 + max_delta_close_sma_200) {
-		log.log("no trade: price (%f) is below sma200 (%f + %f).", close_0, ind.sma_200, 
+	if(close_0 < ind.get_sma_200(0) + max_delta_close_sma_200) {
+		log.log("no trade: price (%f) is below sma200 (%f + %f).", close_0, ind.get_sma_200(0), 
 			max_delta_close_sma_200);
 	} else
 	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + macd_set_point) {
@@ -328,7 +327,7 @@ float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
 }
 
 void tradingbot::finish(std::vector<candle*> * candles) {
-	db.insert_candles(ticker, candles, &ind.m, ind.sma_200, ind.custom_ind);
+	db.insert_candles(ticker, candles, &ind.m, ind.get_sma_200(0), ind.custom_ind);
 
 	/* When backtesting, dont throw away the candles. 
 	*/

@@ -8,6 +8,18 @@
 
 using namespace std;
 
+void indicators::reset(std::string ticker) {
+	if(indicators::ticker != ticker) {
+		log.log("Clearing indicators.");
+		sma_200.clear();
+		m.ema_12.clear();
+		m.ema_26.clear();
+		m.macd.clear();
+		m.signal.clear();
+		indicators::ticker = ticker;
+	}
+}
+
 void indicators::calculate_macd(std::vector<float> prices) {
 	calculate_ema(12, prices, &m.ema_12);
 	calculate_ema(26, prices, &m.ema_26);
@@ -21,6 +33,10 @@ void indicators::calculate_macd(std::vector<float> prices) {
 	}
 
 	calculate_ema(9, m.macd, &m.signal);
+}
+
+void indicators::calculate_sma_200(std::vector<float> prices) {
+	calculate_sma(200, prices, &sma_200);
 }
 
 float indicators::calculate_ema(int no_of_days, std::vector<float> prices) {
@@ -45,19 +61,32 @@ void indicators::calculate_ema(int no_of_days, std::vector<float> prices, std::v
 	}
 }
 
-float indicators::calculate_sma(int no_of_days, std::vector<float> prices) {
-	int idx=0;
+void indicators::calculate_sma(int no_of_days, std::vector<float> prices, std::vector<float> *smas) {
 	float sma=0;
-
-	for(vector<float>::reverse_iterator it = prices.rbegin(); it != prices.rend(); it++) {
-		if(idx >= no_of_days) {
-			break;
+	int day=0;
+	for(vector<float>::iterator it = prices.begin(); it != prices.end(); it++, day++) {
+		if(day < smas->size()) {
+			continue;
 		}
 
-		sma += (*it);
+		int begin = day - no_of_days >= 0 ? day - no_of_days : 0;
 
-		idx++;
+		int idx=0;
+		for(vector<float>::iterator it = prices.begin() + begin; it != prices.end(); it++) {
+			if(idx >= no_of_days) {
+				break;
+			}
+			sma += (*it);
+			idx++;
+		}
+	
+		smas->push_back(sma/no_of_days);
+
 	}
-
-	return sma /= no_of_days;
 }
+
+
+float indicators::get_sma_200(int offset) {
+	return sma_200.at(sma_200.size() - offset - 1);
+}
+
