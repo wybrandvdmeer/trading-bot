@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from dateutil.tz import gettz
 import argparse
 
-
 def fill_init_values(open, lst):
     lst = [x for x in lst if x is not None]
     if len(lst) == 0:
@@ -19,7 +18,6 @@ def fill_init_values(open, lst):
         lst.insert(0, init_value)
 
     return lst
-
 
 days = 0
 
@@ -50,7 +48,7 @@ if ticker is None:
     csr.execute("SELECT DISTINCT ticker FROM candles")
     ticker = csr.fetchone()[0]
 
-sql = "SELECT time, open, close, high, low, macd, signal, sma_200, custom_ind1, custom_ind2, custom_ind3 FROM candles where ticker = '" + ticker + "' ORDER BY time"
+sql = "SELECT time, open, close, high, low, macd, signal, sma_50, sma_200, custom_ind1, custom_ind2, custom_ind3 FROM candles where ticker = '" + ticker + "' ORDER BY time"
 csr.execute(sql)
 
 time = []
@@ -60,6 +58,7 @@ low = []
 high = []
 mac_d = []
 signal = []
+sma_50 = []
 sma_200 = []
 custom_ind1 = []
 custom_ind2 = []
@@ -78,10 +77,11 @@ for row in csr:
     low.append(row[4])
     mac_d.append(row[5])
     signal.append(row[6])
-    sma_200.append(row[7])
-    custom_ind1.append(row[8])
-    custom_ind2.append(row[9])
-    custom_ind3.append(row[10])
+    sma_50.append(row[7])
+    sma_200.append(row[8])
+    custom_ind1.append(row[9])
+    custom_ind2.append(row[10])
+    custom_ind3.append(row[11])
     time.append(datetime.utcfromtimestamp(row[0]))
 
 if len(open) == 0:
@@ -135,6 +135,7 @@ positions.reset_index()
 fplt.plot(mac_d, ax=ax2, legend='MACD')
 fplt.plot(signal, ax=ax2, legend='Signal')
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
+fplt.plot(sma_50, ax=ax, legend='SMA-50')
 fplt.plot(sma_200, ax=ax, legend='SMA-200')
 if custom_ind1 != None:
 	fplt.plot(custom_ind1, ax=ax, legend='custom_ind1')
