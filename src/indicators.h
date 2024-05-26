@@ -11,11 +11,14 @@ class indicators {
 public:
 	float * custom_ind[3];
 	std::vector<float> sma_200;
+	std::vector<float> sma_50;
 	macd m;
 	void calculate_macd(std::vector<float> prices);
 	float calculate_ema(int no_of_days, std::vector<float> prices);
 	void calculate_sma_200(std::vector<float> prices);
+	void calculate_sma_50(std::vector<float> prices);
 	float get_sma_200(int offset);
+	float get_sma_50(int offset);
 	void reset(std::string ticker);
 private:
 	std::string ticker;
