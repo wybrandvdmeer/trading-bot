@@ -11,7 +11,7 @@ import argparse
 def fill_init_values(open, lst):
     lst = [x for x in lst if x is not None]
     if len(lst) == 0:
-        init_value = 0
+        return None
     else:
         init_value = lst[0]
 
@@ -50,7 +50,7 @@ if ticker is None:
     csr.execute("SELECT DISTINCT ticker FROM candles")
     ticker = csr.fetchone()[0]
 
-sql = "SELECT time, open, close, high, low, macd, signal, sma_200, custom_ind1 FROM candles where ticker = '" + ticker + "' ORDER BY time"
+sql = "SELECT time, open, close, high, low, macd, signal, sma_200, custom_ind1, custom_ind2, custom_ind3 FROM candles where ticker = '" + ticker + "' ORDER BY time"
 csr.execute(sql)
 
 time = []
@@ -62,6 +62,8 @@ mac_d = []
 signal = []
 sma_200 = []
 custom_ind1 = []
+custom_ind2 = []
+custom_ind3 = []
 
 fplt.display_timezone = gettz('US/Eastern')
 
@@ -78,6 +80,8 @@ for row in csr:
     signal.append(row[6])
     sma_200.append(row[7])
     custom_ind1.append(row[8])
+    custom_ind2.append(row[9])
+    custom_ind3.append(row[10])
     time.append(datetime.utcfromtimestamp(row[0]))
 
 if len(open) == 0:
@@ -90,6 +94,8 @@ if len(open) == 0:
 
 sma_200 = fill_init_values(open, sma_200)
 custom_ind1 = fill_init_values(open, custom_ind1)
+custom_ind2 = fill_init_values(open, custom_ind2)
+custom_ind3 = fill_init_values(open, custom_ind3)
 
 stock_prices = pd.DataFrame({'datetime': time, 'open': open, 'close': close, 'high': high, 'low': low})
 stock_prices = stock_prices.set_index('datetime')
@@ -135,7 +141,12 @@ fplt.plot(mac_d, ax=ax2, legend='MACD')
 fplt.plot(signal, ax=ax2, legend='Signal')
 fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
 fplt.plot(sma_200, ax=ax, legend='SMA-200')
-fplt.plot(custom_ind1, ax=ax, legend='custom_ind1')
+if custom_ind1 != None:
+	fplt.plot(custom_ind1, ax=ax, legend='custom_ind1')
+if custom_ind2 != None:
+	fplt.plot(custom_ind2, ax=ax, legend='custom_ind2')
+if custom_ind3 != None:
+	fplt.plot(custom_ind3, ax=ax, legend='custom_ind3')
 
 print(positions)
 
