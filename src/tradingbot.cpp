@@ -219,6 +219,10 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles, candle *candle) 
 	float open_0 = candle->open;
 	float close_0 = candle->close;
 
+	ind.custom_ind[0] = NULL;
+	ind.custom_ind[1] = NULL;
+	ind.custom_ind[2] = NULL;
+
 	log.log("(%ld -> %s) - open/close: (%.5f,%.5f), sma50: %.5f, sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
 		candle->time,
 		date_to_time_string(candle->time).c_str(),
