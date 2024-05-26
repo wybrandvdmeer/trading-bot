@@ -67,7 +67,6 @@ void indicators::calculate_ema(int no_of_days, std::vector<float> prices, std::v
 }
 
 void indicators::calculate_sma(int no_of_days, std::vector<float> prices, std::vector<float> *smas) {
-	float sma=0;
 	int day=0;
 	for(vector<float>::iterator it = prices.begin(); it != prices.end(); it++, day++) {
 		if(day < smas->size()) {
@@ -77,16 +76,17 @@ void indicators::calculate_sma(int no_of_days, std::vector<float> prices, std::v
 		int begin = day - no_of_days >= 0 ? day - no_of_days : 0;
 
 		int idx=0;
+		float sma=0;
 		for(vector<float>::iterator it = prices.begin() + begin; it != prices.end(); it++) {
-			if(idx >= no_of_days) {
+			if(idx > day - begin) {
 				break;
 			}
+
 			sma += (*it);
 			idx++;
 		}
-	
-		smas->push_back(sma/no_of_days);
-
+		
+		smas->push_back(sma/(day + 1 < no_of_days ? day + 1 : no_of_days));
 	}
 }
 

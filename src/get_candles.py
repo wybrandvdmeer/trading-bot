@@ -88,11 +88,6 @@ if len(open) == 0:
     print("No data.")
     exit(0)
 
-#
-# sma-200 is only filed in the candles which were involved in the simulation.
-#
-
-sma_200 = fill_init_values(open, sma_200)
 custom_ind1 = fill_init_values(open, custom_ind1)
 custom_ind2 = fill_init_values(open, custom_ind2)
 custom_ind3 = fill_init_values(open, custom_ind3)
