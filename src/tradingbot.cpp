@@ -198,20 +198,18 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 
 	for(auto c : *candles) {
 		if(c->time > time_of_prv_candle) {
-			if(trade_on_candle(c)) {
+			if(trade_on_candle(candles, c)) {
 				return true;
 			}
 			time_of_prv_candle = c->time;
 		}
 	}
 		
-	macd_set_point = get_macd_set_point(ind.m, candles);
-
 	finish(candles);
 	return false;
 }
 
-bool tradingbot::trade_on_candle(candle *candle) {
+bool tradingbot::trade_on_candle(std::vector<candle*> *candles, candle *candle) {
 	float open_0 = candle->open;
 	float close_0 = candle->close;
 
@@ -269,6 +267,8 @@ bool tradingbot::trade_on_candle(candle *candle) {
 				p->sell = candle->time;
 			}
 			sell(p);
+	
+			macd_set_point = get_macd_set_point(ind.m, candles);
 		}
 
 		return finished_for_the_day;

@@ -26,7 +26,7 @@ private:
 	alpaca_api alpaca;
 	std::vector<std::string> black_listed_tickers;
 	bool trade(std::vector<candle*> * candles);
-	bool trade_on_candle(candle * candle);
+	bool trade_on_candle(std::vector<candle*> *candles, candle * candle);
 	bool nse_is_open();
 	bool candle_in_nse_closing_window(candle * c);
 	void buy(std::string ticker, float stock_price, long buy_time);
