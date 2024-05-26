@@ -16,7 +16,7 @@ public:
 	void trade(int top_gainer_idx);
 	bool force, debug, disable_alpaca, slave;
 private:
-	float sma_200, max_delta_close_sma_200, macd_set_point, custom_ind1;
+	float max_delta_close_sma_200, macd_set_point;
 	int time_of_prv_candle;
 	top_gainers tg;
 	yahoo_api yahoo;
@@ -43,9 +43,5 @@ private:
 	float get_macd_set_point(macd m, std::vector<candle*> *candles);
 	int get_gmt_midnight();
 };
-
-bool candle_cmp(candle * c1, candle * c2) { 
-	return c1->time < c2->time;
-}
 
 #endif

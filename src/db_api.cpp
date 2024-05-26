@@ -2,6 +2,7 @@
 #include <string>
 #include <ctime>
 #include <vector>
+#include <cstring>
 #include <sqlite3.h>
 
 #include "position.h"
@@ -78,7 +79,7 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 }
 	
 void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, macd * m, 
-	float sma_200, float * custom_ind1) {	
+	float sma_200, float ** custom_ind) {	
 	int idx=0;
 
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end(); it++, idx++) {
@@ -92,17 +93,19 @@ void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, 
 	}
 
 	// sma value is only calculated for the last candle.
-	update_indicators(candles->at(candles->size() - 1), sma_200, custom_ind1);
+	update_indicators(candles->at(candles->size() - 1), sma_200, custom_ind);
 }
 
-void db_api::update_indicators(candle *c, float sma_200, float * custom_ind1) {
+void db_api::update_indicators(candle *c, float sma_200, float ** custom_ind) {
 	char sql[1000];
 	char sql2[100];
 
-	if(custom_ind1 != NULL) {
-		sprintf(sql2, ", custom_ind1 = %f", * custom_ind1);
-	} else {
-		sprintf(sql2, " ");
+	for(int idx=0; idx < 3; idx++) {
+		if(custom_ind[idx] != NULL) {
+			sprintf(sql2 + strlen(sql2), ", custom_ind%d = %f", idx + 1, *(custom_ind[idx]));
+		} else {
+			sprintf(sql2 + strlen(sql2), " ");
+		}
 	}
 
 	open();
@@ -388,7 +391,7 @@ void db_api::create_schema() {
 	open();
 	execDml("CREATE TABLE candles (id INTEGER NOT NULL, ticker VARCHAR(10), time INTEGER, open REAL, \
 			close REAL, low REAL, high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL, \
-			custom_ind1 REAL)", 
+			custom_ind1 REAL, custom_ind2 REAL, custom_ind3 REAL)", 
 			true);
 }
 

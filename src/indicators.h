@@ -8,6 +8,8 @@
 
 class indicators {
 public:
+	float * custom_ind[3];
+	float sma_200;
 	macd m;
 	void calculate_macd(std::vector<float> prices);
 	float calculate_ema(int no_of_days, std::vector<float> prices);
