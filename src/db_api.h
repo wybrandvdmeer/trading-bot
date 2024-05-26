@@ -44,7 +44,8 @@ private:
 	int selectInt(sqlite3_stmt * statement, int column);
 	sqlite3_stmt * prepare(std::string sql);
 	bool has_candle(std::string ticker, candle * c);
-	void insert_candle(std::string ticker, candle *c, float macd, float signal, float sma_50);
+	void insert_candle(std::string ticker, candle *c, float macd, float signal, float sma_50, 
+		float sma_200);
 	void get_date(std::string &s);
 	std::string get_data_file();
 	std::string get_data_file(bool uri);

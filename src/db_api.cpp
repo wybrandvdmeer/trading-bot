@@ -86,7 +86,8 @@ void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, 
 			insert_candle(ticker, *it, 
 				ind.m.get_macd(candles->size() - 1 - idx), 
 				ind.m.get_signal(candles->size() - 1 - idx),
-				ind.get_sma_50(candles->size() - 1 - idx));
+				ind.get_sma_50(candles->size() - 1 - idx),
+				ind.get_sma_200(candles->size() - 1 - idx));
 		
 			db_api::max_candle_time = (*it)->time; 
 		}
@@ -126,7 +127,8 @@ void db_api::update_indicators(candle *c, float ** custom_ind) {
 	execDml(sql);
 }
 
-void db_api::insert_candle(std::string ticker, candle *c, float macd, float signal, float sma_50) {	
+void db_api::insert_candle(std::string ticker, candle *c, float macd, float signal, float sma_50,
+	float sma_200) {	
 	if(has_candle(ticker, c)) {
 		return;
 	}
@@ -136,7 +138,7 @@ void db_api::insert_candle(std::string ticker, candle *c, float macd, float sign
 	open();
 	char sql[1000];
 	sprintf(sql, "INSERT INTO candles(id, ticker, time, open, close, low, high, volume, macd, signal,\
- 		sma_50) VALUES(%d, '%s', %ld, %.16f, %.16f, %.16f, %.16f, %ld, %f, %f, %f)",
+ 		sma_50, sma_200) VALUES(%d, '%s', %ld, %.16f, %.16f, %.16f, %.16f, %ld, %f, %f, %f, %f)",
 		no_of_candles + 1,
 		ticker.c_str(), 
 		c->time, 
@@ -147,7 +149,8 @@ void db_api::insert_candle(std::string ticker, candle *c, float macd, float sign
 		c->volume, 
 		macd,
 		signal,
-		sma_50);
+		sma_50,
+		sma_200);
 		 
 	execDml(sql);
 }
