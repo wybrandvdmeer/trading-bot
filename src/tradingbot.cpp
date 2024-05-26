@@ -331,7 +331,7 @@ float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
 }
 
 void tradingbot::finish(std::vector<candle*> * candles) {
-	db.insert_candles(ticker, candles, &ind.m, ind.get_sma_200(0), ind.custom_ind);
+	db.insert_candles(ticker, candles, ind);
 
 	/* When backtesting, dont throw away the candles. 
 	*/

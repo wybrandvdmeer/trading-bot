@@ -8,6 +8,7 @@
 #include "macd.h"
 #include "position.h"
 #include "logger.h"
+#include "indicators.h"
 
 #ifndef DB_API_H
 #define DB_API_H
@@ -24,8 +25,7 @@ public:
 	position * get_open_position(std::string ticker);
 	void open_position(position p);
 	void close_position(position p);
-	void insert_candles(std::string ticker, std::vector<candle*> *candles, macd * m, 
-		float sma_200, float ** custom_ind);
+	void insert_candles(std::string ticker, std::vector<candle*> *candles, indicators ind);
 	std::vector<candle*> *get_candles(std::string db_file);
 	std::vector<position*> *get_closed_positions();
 	float select_max_delta_close_sma_200();
@@ -44,11 +44,11 @@ private:
 	int selectInt(sqlite3_stmt * statement, int column);
 	sqlite3_stmt * prepare(std::string sql);
 	bool has_candle(std::string ticker, candle * c);
-	void insert_candle(std::string ticker, candle *c, float macd, float signal);
+	void insert_candle(std::string ticker, candle *c, float macd, float signal, float sma_50);
 	void get_date(std::string &s);
 	std::string get_data_file();
 	std::string get_data_file(bool uri);
-	void update_indicators(candle *c, float sma_200, float ** custom_ind);
+	void update_indicators(candle *c, float ** custom_ind);
 	int select_no_of_rows_of_table(std::string table);
 	logger log;
 	bool read_only;
