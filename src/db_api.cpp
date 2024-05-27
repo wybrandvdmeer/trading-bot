@@ -100,6 +100,7 @@ void db_api::insert_candles(std::string ticker, std::vector<candle*> * candles, 
 void db_api::update_indicators(candle *c, float ** custom_ind) {
 	char sql[1000];
 	char sql2[100];
+	*sql2 = 0x00;
 
 	for(int idx=0; idx < 3; idx++) {
     	if(custom_ind[idx] != NULL) {
