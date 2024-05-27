@@ -19,6 +19,9 @@ args = parser.parse_args()
 
 date = args.date
 
+if date == None:
+	date = datetime.today().strftime('%Y%m%d')
+
 db_files = [f for f in listdir(DB_LOCATION) if isfile(join(DB_LOCATION, f))]
 
 positions = pd.DataFrame(columns=['buy_price', 'sell_price', 'no_of_stocks'])
