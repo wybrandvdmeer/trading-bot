@@ -52,7 +52,7 @@ float indicators::calculate_ema(int no_of_days, std::vector<float> prices) {
 
 void indicators::calculate_ema(int no_of_days, std::vector<float> prices, std::vector<float> * emas) {
 	float alpha = 2/((float)no_of_days + 1);
-	float ema = emas->size() > 0 ? emas->at(emas->size() - 1) : 0;
+	float ema = emas->size() > 0 ? emas->at(emas->size() - 1) : prices.at(0);
 
 	int idx=0;
 	for(vector<float>::iterator it = prices.begin(); it != prices.end(); it++, idx++) {
