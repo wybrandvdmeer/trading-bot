@@ -28,7 +28,7 @@ using namespace std;
 #define RELATIVE_HIST 0.1
 
 // Om ons te beschermen tegen pre-market buying en dan bij opening Selling scenario's.
-#define OPENINGS_WINDOW_IN_MIN 5
+#define OPENINGS_WINDOW_IN_MIN 10
 #define QUALITY_CANDLES 0.9
 
 // Only buy when price has exceed sma + sma * SMA_RELATIVE_DISTANCE
