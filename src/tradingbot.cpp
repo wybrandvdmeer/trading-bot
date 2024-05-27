@@ -212,6 +212,8 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	*/
 	bool ret = false;
 	candle * latest = candles->at(candles->size() - 1);
+
+	log.log("Time latest candle: %s", date_to_string(latest->time).c_str());
 	if(latest->time > time_of_prv_candle) {
 		ret = trade_on_candle(candles, latest);
 		time_of_prv_candle = latest->time;
