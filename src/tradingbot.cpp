@@ -17,6 +17,8 @@ using namespace std;
 #define SELL_NEGATIVE_TREND_LENGTH 4
 #define BUY_POSITIVE_TREND_LENGTH 2
 
+#define SMA_50_200_POSITIVE_TREND_LENGTH 3
+
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
 
@@ -293,7 +295,7 @@ bool tradingbot::trade_on_candle(std::vector<candle*> *candles, candle *candle) 
 	if(!ind.m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
 		log.log("no trade: not a positive trend on the macd histogram.");
 	} else 
-	if(!ind.is_sma_50_200_diff_trending(3, true)) {
+	if(!ind.is_sma_50_200_diff_trending(SMA_50_200_POSITIVE_TREND_LENGTH, true)) {
 		log.log("no trade: not a positive trend on the sma-50/200 indicators.");
 	} else 
 	if(close_0 < ind.get_sma_200(0) + max_delta_close_sma_200) {
