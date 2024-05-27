@@ -202,6 +202,10 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	ind.calculate_macd(close_prices);
 	max_delta_close_sma_200 = db.select_max_delta_close_sma_200() * SMA_RELATIVE_DISTANCE;
 
+	ind.custom_ind[0] = NULL;
+	ind.custom_ind[1] = NULL;
+	ind.custom_ind[2] = NULL;
+
 	/* It can be that Yahoo sends 2 new candles in the same batch. We calculated all the indicators
 	on these 2 new candles, but we want to trade only on the most recent candle.
 	Dont trade on old data.
@@ -220,10 +224,6 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 bool tradingbot::trade_on_candle(std::vector<candle*> *candles, candle *candle) {
 	float open_0 = candle->open;
 	float close_0 = candle->close;
-
-	ind.custom_ind[0] = NULL;
-	ind.custom_ind[1] = NULL;
-	ind.custom_ind[2] = NULL;
 
 	log.log("(%ld -> %s) - open/close: (%.5f,%.5f), sma50: %.5f, sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
 		candle->time,
