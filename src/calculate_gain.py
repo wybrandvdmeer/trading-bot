@@ -2,25 +2,26 @@
 
 import sqlite3
 import pandas as pd
-import finplot as fplt
 from datetime import datetime, timedelta
-from dateutil.tz import gettz
 import argparse
 from os import listdir
 from os.path import isfile, join
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 DB_LOCATION = '/db-files'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--date', type=str)
+parser.add_argument('--strategy', type=str)
 args = parser.parse_args()
 
 date = args.date
+strategy = args.strategy
 
 if date == None:
-	date = datetime.today().strftime('%Y%m%d')
+    date = datetime.today().strftime('%Y%m%d')
 
 db_files = [f for f in listdir(DB_LOCATION) if isfile(join(DB_LOCATION, f))]
 
@@ -28,6 +29,9 @@ positions = pd.DataFrame(columns=['buy_price', 'sell_price', 'no_of_stocks'])
 
 for f in db_files:
     if f.find(date) != -1:
+        if strategy is not None and strategy not in f:
+            continue
+            
         db_file = 'file:/db-files/' + f + '?mode=ro'
 
         conn = sqlite3.connect(db_file, uri=True)
@@ -45,7 +49,8 @@ for f in db_files:
         sell_price = []
         no_of_stocks = []
 
-        csr.execute("SELECT id, buy_time, sell_time, stock_price, sell_price, no_of_stocks FROM positions WHERE ticker = '" + ticker + "' AND sell_price IS NOT NULL")
+        csr.execute(
+            "SELECT id, buy_time, sell_time, stock_price, sell_price, no_of_stocks FROM positions WHERE ticker = '" + ticker + "' AND sell_price IS NOT NULL")
 
         for row in csr:
             buy_price.append(row[3])
@@ -65,11 +70,3 @@ no_of_stocks = positions['no_of_stocks'].sum()
 no_of_trades = len(positions.index)
 
 print(date + ': gain: ' + str(gain) + ', no_of_stocks: ' + str(no_of_stocks) + ', no_of_trades: ' + str(no_of_trades))
-
-
-
-
-
-
-
-
