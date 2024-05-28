@@ -54,6 +54,7 @@ tradingbot::tradingbot() {
 	tradingbot::time_of_prv_candle = 0;
 	tradingbot::strategy = "macd";
 	tradingbot::finished_for_the_day = false;
+	tradingbot::slave = false;
 }
 
 void tradingbot::trade(int top_gainers_idx) {
