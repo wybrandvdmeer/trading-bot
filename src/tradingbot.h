@@ -12,7 +12,7 @@
 class tradingbot {
 public:
 	tradingbot();
-	std::string ticker, db_file;
+	std::string ticker, db_file, strategy;
 	void trade(int top_gainer_idx);
 	bool force, debug, disable_alpaca, slave;
 private:
@@ -27,6 +27,7 @@ private:
 	std::vector<std::string> black_listed_tickers;
 	bool trade(std::vector<candle*> * candles);
 	bool macd_scavenging_strategy(std::vector<candle*> *candles, candle * candle);
+	bool sma_crossover_strategy(std::vector<candle*> *candles, candle * candle);
 	bool nse_is_open();
 	bool candle_in_nse_closing_window(candle * c);
 	void buy(std::string ticker, float stock_price, long buy_time);

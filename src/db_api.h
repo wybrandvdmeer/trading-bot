@@ -16,7 +16,7 @@
 class db_api {
 public:
 	bool debug;
-	std::string ticker;
+	std::string ticker, strategy;
 	db_api();
 
 	void reset();

@@ -52,6 +52,7 @@ tradingbot::tradingbot() {
 	tradingbot::disable_alpaca = false;
 	tradingbot::macd_set_point = 0;
 	tradingbot::time_of_prv_candle = 0;
+	tradingbot::strategy = "macd";
 }
 
 void tradingbot::trade(int top_gainers_idx) {
@@ -67,6 +68,8 @@ void tradingbot::trade(int top_gainers_idx) {
 	if(slave) {
 		tg.slave = true;
 	}
+
+	db.strategy = strategy;
 
 	/* Back-testing against a db file. 
 	*/
@@ -236,6 +239,81 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 
 	finish(candles);
 	return ret;
+}
+
+bool tradingbot::sma_crossover_strategy(std::vector<candle*> *candles, candle *candle) {
+	float open_0 = candle->open;
+	float close_0 = candle->close;
+
+	bool finished_for_the_day = candle_in_nse_closing_window(candle);
+	
+	position * p = db.get_open_position(ticker);
+	if(p != NULL) {
+		bool bSell = false;
+		if(ind.get_sma_50(0) - ind.get_sma_200(0) <= 0) { 
+			log.log("sell: sma_50 is below sma_200.");
+			bSell = true;
+		} else
+		if(finished_for_the_day) {
+			log.log("sell: current candle is in closing window. Trading day is finished.");
+			bSell = true;
+		} else
+		if(close_0 >= p->sell_off_price) {
+			p->stop_loss_activated = 0;
+			log.log("sell: current price (%f) is above selling price (%f)." ,
+				close_0 , p->sell_off_price);
+			bSell = true;
+		} else
+		if(close_0 <= p->loss_limit_price) {
+			p->stop_loss_activated = 1;
+			log.log("sell: current price (%f) is below stop-loss price (%f)." ,
+				close_0 , p->loss_limit_price);
+			bSell = true;
+		}
+
+		if(bSell) {
+			p->sell_price = close_0;
+
+			/* In case of back-testing, the candle time is leading. 
+			*/
+			if(db_file.empty()) {
+				p->sell = time(0);
+			} else {
+				p->sell = candle->time;
+			}
+			sell(p);
+		}
+
+		return finished_for_the_day;
+	}
+
+	/* Buy logic. 
+	*/
+	if(in_openings_window(candle->time)) { // for back-testing.
+ 		log.log("no trade: Candle is still in openings window."); 
+	} else
+	if(!ind.is_sma_50_200_diff_trending(SMA_50_200_POSITIVE_TREND_LENGTH, true)) {
+		log.log("no trade: not a positive trend on the sma-50/200 indicators.");
+	} else 
+	if(close_0 < ind.get_sma_200(0) + max_delta_close_sma_200) {
+		log.log("no trade: price (%f) is below sma200 (%f + %f).", close_0, ind.get_sma_200(0), 
+			max_delta_close_sma_200);
+	} else
+	if(ind.get_sma_200(0) >= ind.get_sma_50(0)) {
+		log.log("no trade: sma_200(%f) is greater then sma_50(%f).",
+			ind.get_sma_200(0), 
+			ind.get_sma_50(0));
+	} else {
+		/* In case of back-testing, the candle time is leading. 
+		*/
+		if(db_file.empty()) {
+			buy(ticker, close_0, time(0));
+		} else {
+			buy(ticker, close_0, candle->time);
+		}
+	}
+
+	return false;
 }
 
 bool tradingbot::macd_scavenging_strategy(std::vector<candle*> *candles, candle *candle) {

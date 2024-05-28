@@ -40,6 +40,16 @@ int main(int argc, char ** argv) {
 		t.ticker = std::string(ticker);
 	}
 
+	char *strategy = getOptionValue(argv, argv + argc, "--strategy");
+	if(strategy != NULL) {
+		std:string s = std::string(strategy);
+		if(s != "macd" && s != "sma") {
+			log.log("Strategy should be macd or sma.");
+			exit(1);
+		}
+		t.strategy = std::string(strategy);
+	}
+
 	char *db_file = getOptionValue(argv, argv + argc, "--db-file");
 	if(db_file != NULL) {
 		t.db_file = std::string(db_file);

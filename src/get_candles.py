@@ -24,12 +24,17 @@ days = 0
 parser = argparse.ArgumentParser()
 parser.add_argument('--db-file', type=str)
 parser.add_argument('--ticker', type=str)
+parser.add_argument('--strategy', type=str)
 parser.add_argument('--days', type=int)
 args = parser.parse_args()
 
 ticker = args.ticker
 if ticker is not None:
     ticker = ticker.upper()
+
+strategy = args.strategy
+if strategy is None:
+    strategy = 'macd'
 
 if args.days != None:
     days = args.days
@@ -38,7 +43,7 @@ db_file = args.db_file
 dt = datetime.today() - timedelta(days=days)
 date_string = dt.strftime('%Y%m%d')
 if db_file is None:
-    db_file = 'file:/db-files/' + ticker + '-' + date_string + '.db?mode=ro'
+    db_file = 'file:/db-files/' + ticker + '-' + date_string + '-' + strategy + '.db?mode=ro'
 
 print("DB-file: " + db_file)
 conn = sqlite3.connect(db_file, uri=True)

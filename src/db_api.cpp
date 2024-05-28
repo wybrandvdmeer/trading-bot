@@ -330,7 +330,7 @@ std::string db_api::get_data_file() {
 std::string db_api::get_data_file(bool uri) {
 	std::string date_string;
 	get_date(date_string);
-	std::string data_file = "/db-files/" + db_api::ticker + "-" + date_string + ".db";
+	std::string data_file = "/db-files/" + db_api::ticker + "-" + date_string + "-" + strategy + ".db";
 	if(!uri) {
 		return data_file;
 	}
