@@ -232,7 +232,15 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 			ind.m.get_signal(0),
 			ind.m.get_histogram(0));
 
-		ret = macd_scavenging_strategy(candles, latest);
+		if(strategy == "macd") {
+			ret = macd_scavenging_strategy(candles, latest);
+		} else
+		if(strategy == "sma") {
+			ret = sma_crossover_strategy(candles, latest);
+		} else {
+			log.log("Unknown strategy.");
+			exit(1);
+		}
 	
 		time_of_prv_candle = latest->time;
 	}
@@ -282,6 +290,10 @@ bool tradingbot::sma_crossover_strategy(std::vector<candle*> *candles, candle *c
 				p->sell = candle->time;
 			}
 			sell(p);
+
+			/* One shot per day. 
+			*/	
+			finished_for_the_day = true;
 		}
 
 		return finished_for_the_day;
