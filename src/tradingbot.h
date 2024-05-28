@@ -14,7 +14,7 @@ public:
 	tradingbot();
 	std::string ticker, db_file, strategy;
 	void trade(int top_gainer_idx);
-	bool force, debug, disable_alpaca, slave;
+	bool force, debug, disable_alpaca, slave, finished_for_the_day;
 private:
 	float max_delta_close_sma_200, macd_set_point;
 	int time_of_prv_candle;
@@ -25,7 +25,7 @@ private:
 	logger log;
 	alpaca_api alpaca;
 	std::vector<std::string> black_listed_tickers;
-	bool trade(std::vector<candle*> * candles);
+	void trade(std::vector<candle*> * candles);
 	bool macd_scavenging_strategy(std::vector<candle*> *candles, candle * candle);
 	bool sma_crossover_strategy(std::vector<candle*> *candles, candle * candle);
 	bool nse_is_open();

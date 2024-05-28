@@ -53,6 +53,7 @@ tradingbot::tradingbot() {
 	tradingbot::macd_set_point = 0;
 	tradingbot::time_of_prv_candle = 0;
 	tradingbot::strategy = "macd";
+	tradingbot::finished_for_the_day = false;
 }
 
 void tradingbot::trade(int top_gainers_idx) {
@@ -93,9 +94,7 @@ void tradingbot::trade(int top_gainers_idx) {
 				v->push_back(candles->at(idx2));
 			}
 
-			if(trade(v)) {
-				break;
-			}
+			trade(v);
 		}
 
 		std::vector<position*> * positions = db.get_closed_positions();
@@ -120,6 +119,7 @@ void tradingbot::trade(int top_gainers_idx) {
 			}
 			db.reset();
 			black_listed_tickers.clear();
+			finished_for_the_day = false;
 			std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000)); 
 			continue;
 		}
@@ -162,11 +162,7 @@ void tradingbot::trade(int top_gainers_idx) {
 						time_of_prv_candle = get_gmt_midnight();
 					}
 
-					/* True -> finished for the day. 
-					*/
-					if(trade(candles)) {
-						sleep = 8 * 60 * 60;	
-					}
+					trade(candles);
 				}
 			} else {
 				log.log("No candles received");
@@ -181,7 +177,7 @@ bool candle_cmp(candle * c1, candle * c2) {
 	return c1->time < c2->time;
 }
 
-bool tradingbot::trade(std::vector<candle*> *candles) {
+void tradingbot::trade(std::vector<candle*> *candles) {
 	/* Delete non valid candles. 
 	*/	
 	for(std::vector<candle*>::iterator it = candles->begin(); it != candles->end();) {
@@ -213,7 +209,6 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	on these 2 new candles, but we want to trade only on the most recent candle.
 	Dont trade on old data.
 	*/
-	bool ret = false;
 	candle * latest = candles->at(candles->size() - 1);
 
 	log.log("Ticker: %s, time latest candle: %s", 
@@ -233,10 +228,10 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 			ind.m.get_histogram(0));
 
 		if(strategy == "macd") {
-			ret = macd_scavenging_strategy(candles, latest);
+			finished_for_the_day = macd_scavenging_strategy(candles, latest);
 		} else
 		if(strategy == "sma") {
-			ret = sma_crossover_strategy(candles, latest);
+			finished_for_the_day = sma_crossover_strategy(candles, latest);
 		} else {
 			log.log("Unknown strategy.");
 			exit(1);
@@ -246,12 +241,15 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	}
 
 	finish(candles);
-	return ret;
 }
 
 bool tradingbot::sma_crossover_strategy(std::vector<candle*> *candles, candle *candle) {
 	float open_0 = candle->open;
 	float close_0 = candle->close;
+
+	if(finished_for_the_day) {
+		return true;
+	}
 
 	bool finished_for_the_day = candle_in_nse_closing_window(candle);
 	
@@ -331,6 +329,10 @@ bool tradingbot::sma_crossover_strategy(std::vector<candle*> *candles, candle *c
 bool tradingbot::macd_scavenging_strategy(std::vector<candle*> *candles, candle *candle) {
 	float open_0 = candle->open;
 	float close_0 = candle->close;
+
+	if(finished_for_the_day) {
+		return true;
+	}
 
 	bool finished_for_the_day = candle_in_nse_closing_window(candle);
 	
