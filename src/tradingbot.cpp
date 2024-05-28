@@ -216,7 +216,21 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("Ticker: %s, time latest candle: %s", 
 		ticker.c_str(), date_to_string(latest->time).c_str());
 	if(latest->time > time_of_prv_candle) {
-		ret = trade_on_candle(candles, latest);
+
+		log.log("(%ld -> %s) - open/close: (%.5f,%.5f), sma50: %.5f, sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
+			latest->time,
+			date_to_time_string(latest->time).c_str(),
+			latest->open, 
+			latest->close,
+			ind.get_sma_50(0),
+			ind.get_sma_200(0),
+			max_delta_close_sma_200,
+			ind.m.get_macd(0),
+			ind.m.get_signal(0),
+			ind.m.get_histogram(0));
+
+		ret = macd_scavenging_strategy(candles, latest);
+	
 		time_of_prv_candle = latest->time;
 	}
 
@@ -224,21 +238,9 @@ bool tradingbot::trade(std::vector<candle*> *candles) {
 	return ret;
 }
 
-bool tradingbot::trade_on_candle(std::vector<candle*> *candles, candle *candle) {
+bool tradingbot::macd_scavenging_strategy(std::vector<candle*> *candles, candle *candle) {
 	float open_0 = candle->open;
 	float close_0 = candle->close;
-
-	log.log("(%ld -> %s) - open/close: (%.5f,%.5f), sma50: %.5f, sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
-		candle->time,
-		date_to_time_string(candle->time).c_str(),
-		open_0, 
-		close_0,
-		ind.get_sma_50(0),
-		ind.get_sma_200(0),
-		max_delta_close_sma_200,
-		ind.m.get_macd(0),
-		ind.m.get_signal(0),
-		ind.m.get_histogram(0));
 
 	bool finished_for_the_day = candle_in_nse_closing_window(candle);
 	
