@@ -471,8 +471,10 @@ void tradingbot::buy(std::string ticker, float stock_price, long buy_time) {
 	// inzet: 200, risk: 5% -> 20 euro risico.  
 	float risk_per_stock = ((float)10)/p.no_of_stocks;
 	p.loss_limit_price = stock_price - risk_per_stock;
-	p.sell_off_price = stock_price + risk_per_stock * 4;
-	
+
+	// 3 percent gain is reasonable.
+	p.sell_off_price = stock_price + (stock_price/100) * 3;	
+
 	log.log("Buy (%s), price: %f, number: %d, sell_off_price: %f, loss-limit: %f", 
 		ticker.c_str(), 
 		p.stock_price,
