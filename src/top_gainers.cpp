@@ -97,7 +97,6 @@ std::vector<std::string> * top_gainers::yget() {
 	}
 
 	out.close();
-	slave = true; // Next time read from file.
 
 	return top_gainers->size() > 0 ? top_gainers : NULL;
 }
