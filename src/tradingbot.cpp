@@ -217,7 +217,6 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("Ticker: %s, time latest candle: %s", 
 		ticker.c_str(), date_to_string(latest->time).c_str());
 	if(latest->time > time_of_prv_candle) {
-
 		log.log("(%ld -> %s) - open/close: (%.5f,%.5f), sma50: %.5f, sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
 			latest->time,
 			date_to_time_string(latest->time).c_str(),
@@ -321,14 +320,14 @@ bool tradingbot::sma_crossover_strategy(std::vector<candle*> *candles, candle *c
 		log.log("no trade: sma_200(%f) is greater then sma_50(%f).",
 			ind.get_sma_200(0), 
 			ind.get_sma_50(0));
+	} else
+	if(db_file.empty() && time(0) - candle->time >= MAX_LAG_TIME) {
+		log.log("no trade: difference (%ld) candle time (%ld) vs current-time (%ld) is too great.",
+		time(0) - candle->time,
+		candle->time,
+		time(0));
 	} else {
-		/* In case of back-testing, the candle time is leading. 
-		*/
-		if(db_file.empty()) {
-			buy(ticker, close_0, time(0));
-		} else {
-			buy(ticker, close_0, candle->time);
-		}
+		buy(ticker, close_0, candle->time);
 	}
 
 	return false;
@@ -385,12 +384,12 @@ bool tradingbot::macd_scavenging_strategy(std::vector<candle*> *candles, candle 
 				p->sell = candle->time;
 			}
 			sell(p);
-	
-			macd_set_point = get_macd_set_point(ind.m, candles);
 		}
 
 		return finished_for_the_day;
 	}
+	
+	macd_set_point = get_macd_set_point(ind.m, candles);
 
 	/* Buy logic. 
 	*/
@@ -408,23 +407,18 @@ bool tradingbot::macd_scavenging_strategy(std::vector<candle*> *candles, candle 
 			max_delta_close_sma_200);
 	} else
 	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + macd_set_point) {
-		log.log("no trade: macd(%f) is smaller then signal (%f).",
+		log.log("no trade: macd(%f) is smaller then signal + set-point (%f + %f).",
 			ind.m.get_macd(0), 
-			ind.m.get_signal(0));
+			ind.m.get_signal(0),
+			macd_set_point);
 	} else
-	if(time(0) - candle->time >= MAX_LAG_TIME) {
+	if(db_file.empty() && time(0) - candle->time >= MAX_LAG_TIME) {
 		log.log("no trade: difference (%ld) candle time (%ld) vs current-time (%ld) is too great.",
 			time(0) - candle->time,
 			candle->time,
 			time(0));
 	} else {
-		/* In case of back-testing, the candle time is leading. 
-		*/
-		if(db_file.empty()) {
-			buy(ticker, close_0, time(0));
-		} else {
-			buy(ticker, close_0, candle->time);
-		}
+		buy(ticker, close_0, candle->time);
 	}
 
 	return false;
