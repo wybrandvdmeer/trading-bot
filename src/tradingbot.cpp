@@ -88,6 +88,10 @@ void tradingbot::trade(int top_gainers_idx) {
 		std::vector<candle*> *candles = db.get_candles(db_file);
 
 		int day_break_position = find_position_of_last_day(candles);
+		if(day_break_position == -1) {
+			log.log("Cannot determine position of last day.");
+			return;
+		}
 
 		time_of_prv_candle = candles->at(day_break_position - 1)->time;
 

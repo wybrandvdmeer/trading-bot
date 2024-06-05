@@ -38,7 +38,11 @@ for f in db_files:
         csr = conn.cursor()
 
         csr.execute("SELECT DISTINCT ticker FROM candles")
-        ticker = csr.fetchone()[0]
+        rc = csr.fetchone()
+        if rc == None:
+            continue
+
+        ticker = rc[0]
 
         print(ticker)
 
