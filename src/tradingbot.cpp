@@ -34,6 +34,8 @@ using namespace std;
 // Only buy when price has exceed sma + sma * SMA_RELATIVE_DISTANCE
 #define SMA_RELATIVE_DISTANCE 0.1
 
+#define MAX_LAG_TIME 90
+
 /* 
 Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na bijv de 1e pull back.
 Trendfollowing: Identificeer op dag basis een trend en stap dan in aan het begin vd trend op basis
@@ -409,6 +411,12 @@ bool tradingbot::macd_scavenging_strategy(std::vector<candle*> *candles, candle 
 		log.log("no trade: macd(%f) is smaller then signal (%f).",
 			ind.m.get_macd(0), 
 			ind.m.get_signal(0));
+	} else
+	if(time(0) - candle->time >= MAX_LAG_TIME) {
+		log.log("no trade: difference (%ld) candle time (%ld) vs current-time (%ld) is too great.",
+			time(0) - candle->time,
+			candle->time,
+			time(0));
 	} else {
 		/* In case of back-testing, the candle time is leading. 
 		*/
