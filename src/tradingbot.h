@@ -43,6 +43,7 @@ private:
 		std::vector<std::string> black_listed_tickers, int top_gainers_idx);
 	float get_macd_set_point(macd m, std::vector<candle*> *candles);
 	int get_gmt_midnight();
+	bool in_second_positive_sma_period(std::vector<candle*> * candles);
 };
 
 #endif

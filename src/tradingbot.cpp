@@ -325,6 +325,9 @@ bool tradingbot::sma_crossover_strategy(std::vector<candle*> *candles, candle *c
 			ind.get_sma_200(0), 
 			ind.get_sma_50(0));
 	} else
+	if(!in_second_positive_sma_period(candles)) {
+		log.log("no trade: not in second positive sma period.");
+	} else 
 	if(db_file.empty() && time(0) - candle->time >= MAX_LAG_TIME) {
 		log.log("no trade: difference (%ld) candle time (%ld) vs current-time (%ld) is too great.",
 		time(0) - candle->time,
@@ -430,6 +433,10 @@ bool tradingbot::macd_scavenging_strategy(std::vector<candle*> *candles, candle 
 
 float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
 	int start = find_position_of_last_day(candles);
+	if(start == -1) {
+		log.log("Cannot find position of last day.");
+		return 0;
+	}
 
 	float max_hist=0;
 	for(int idx=start; idx < candles->size(); idx++) {
@@ -651,5 +658,28 @@ int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
         idx++;
 	}
 	return day_break_position;
+}
+
+bool tradingbot::in_second_positive_sma_period(std::vector<candle*> * candles) {
+	int start = find_position_of_last_day(candles);
+	if(start == -1) {
+		log.log("Cannot find position of last day.");
+		return false;
+	}
+	int period=0;
+
+	bool sma_positive = false;
+	for(int idx=start; idx < ind.sma_50.size(); idx++) {
+		if(ind.sma_50.at(idx) > ind.sma_200.at(idx)) {
+			if(!sma_positive) {
+				sma_positive = true;
+				period++;
+			}
+		} else {
+			sma_positive = false;
+		}
+	}
+
+	return period == 2 && sma_positive;
 }
 
