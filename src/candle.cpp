@@ -8,15 +8,24 @@ candle::candle(
 	float close, 
 	float low, 	
 	float high, 
-	float adjustedClose, 
-	long volume) {
-	candle::time =  time;
+	long volume,
+	float adjustedClose) {
+	candle::time = time;
 	candle::open = open; 	
 	candle::close = close; 
 	candle::low = low; 	
 	candle::high = high;
-	candle::adjustedClose = adjustedClose;
 	candle::volume = volume;
+	candle::adjustedClose = adjustedClose;
+}
+
+bool candle::equals(candle c) {
+	return time == c.time &&
+		open == c.open &&
+		close == c.close &&
+		low == c.low &&
+		high == c.high &&
+		volume == c.volume;
 }
 
 bool candle::is_valid() {

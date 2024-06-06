@@ -130,7 +130,15 @@ void db_api::update_indicators(candle *c, float ** custom_ind) {
 
 void db_api::insert_candle(std::string ticker, candle *c, float macd, float signal, float sma_50,
 	float sma_200) {	
-	if(has_candle(ticker, c)) {
+	candle candle = get_candle(ticker, c);
+
+	if(candle.time != 0) {
+		/* Yahoo can correct their candles. If so, we have to update the candle.
+		*/
+		if(!candle.equals(*c)) {
+			log.log("Update candle (%s,%ld)", ticker, c->time);
+			update_candle(ticker, *c);
+		}
 		return;
 	}
 
@@ -161,6 +169,21 @@ void db_api::close_position(position p) {
 	char sql[1000];
 	sprintf(sql, "UPDATE positions SET sell_time = %ld, sell_price = %f, stop_loss_activated = %d\
 		WHERE id = %d", p.sell, p.sell_price, p.stop_loss_activated, p.id);
+	execDml(sql);
+}
+
+void db_api::update_candle(std::string ticker, candle c) {
+	open();
+	char sql[1000];
+	sprintf(sql, "UPDATE candles SET open = %.16f, close = %.16f, low = %.16f, high = %.16f, \
+		volume = %ld WHERE time = %ld AND ticker = %s",
+		c.open,
+		c.close,
+		c.low,
+		c.high,
+		c.volume,
+		c.time,
+		ticker.c_str());
 	execDml(sql);
 }
 
@@ -254,11 +277,12 @@ int db_api::select_no_of_rows_of_table(std::string table) {
     return count;
 }
 
-bool db_api::has_candle(std::string ticker, candle *c) {
+candle db_api::get_candle(std::string ticker, candle *c) {
 	open();
 	char sql[1000];
 
-	sprintf(sql, "SELECT COUNT(*) FROM candles WHERE ticker = '%s' AND time = %ld", 
+	sprintf(sql, "SELECT open, close, low, high, volume \
+		FROM candles WHERE ticker = '%s' AND time = %ld", 
 		ticker.c_str(), c->time);
 
 	if(debug) {
@@ -270,13 +294,20 @@ bool db_api::has_candle(std::string ticker, candle *c) {
 
 	if(sqlite3_data_count(s) == 0) {
 		close(s);
-		return false;
+		candle cc;
+		return cc;
 	}
 
-	int count = selectInt(s, 0);
+	float open = selectFloat(s, 0);
+	float closeP = selectFloat(s, 1);
+	float low = selectFloat(s, 2);
+	float high = selectFloat(s, 3);
+	int volume = selectInt(s, 4);
+
+	candle cc(c->time, open, closeP, low, high, volume);
 
 	close(s);
-	return count != 0 ? true : false;
+	return cc;
 }
 
 position * db_api::get_open_position(std::string ticker) {

@@ -85,18 +85,9 @@ void indicators::calculate_sma(int no_of_days, std::vector<float> prices, std::v
 		for(vector<float>::iterator it = prices.begin() + begin; 
 			idx < day && it != prices.end(); it++, idx++) {
 			sma += (*it);
-
-/* Debug logging. */
-if(no_of_days == 50) {
-log.log("%f", *it);
-}
 		}
 		float result = sma/(day < no_of_days ? day : no_of_days);
 		
-/* Debug logging. */
-if(no_of_days == 50) {
-log.log("result: %f", result);
-}
 		smas->push_back(result);
 	}
 }
