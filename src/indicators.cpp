@@ -44,6 +44,12 @@ void indicators::calculate_sma_50(std::vector<float> prices) {
 	calculate_sma(50, prices, &sma_50);
 }
 
+float indicators::calculate_sma(int no_of_days, std::vector<float> prices) {
+	std::vector<float> smas;
+	calculate_sma(no_of_days, prices, &smas);
+	return smas.at(smas.size() - 1);
+}
+
 float indicators::calculate_ema(int no_of_days, std::vector<float> prices) {
 	std::vector<float> emas;
 	calculate_ema(no_of_days, prices, &emas);
