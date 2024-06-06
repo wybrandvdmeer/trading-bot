@@ -32,7 +32,7 @@ using namespace std;
 #define QUALITY_CANDLES 0.9
 
 // Only buy when price has exceed sma + sma * SMA_RELATIVE_DISTANCE
-#define SMA_RELATIVE_DISTANCE 0.1
+#define SMA_RELATIVE_DISTANCE 0.05
 
 #define MAX_LAG_TIME 90
 
@@ -269,11 +269,13 @@ bool tradingbot::sma_crossover_strategy(std::vector<candle*> *candles, candle *c
 			log.log("sell: sma_50 is below sma_200.");
 			bSell = true;
 		} else
-		if(close_0 <= ind.get_sma_200(0) + max_delta_close_sma_200) {
-			log.log("sell: price (%f) is below sma200 (%f + %f).", close_0, ind.get_sma_200(0), 
+/*
+		if(close_0 <= ind.get_sma_200(0) - max_delta_close_sma_200) {
+			log.log("sell: price (%f) is below sma200 (%f - %f).", close_0, ind.get_sma_200(0), 
 			max_delta_close_sma_200);
 			bSell = true;
 		} else
+*/
 		if(finished_for_the_day) {
 			log.log("sell: current candle is in closing window. Trading day is finished.");
 			bSell = true;
@@ -484,9 +486,7 @@ void tradingbot::buy(std::string ticker, float stock_price, long buy_time) {
 		return;
 	}
 
-	// inzet: 200, risk: 5% -> 20 euro risico.  
-	float risk_per_stock = ((float)10)/p.no_of_stocks;
-	p.loss_limit_price = stock_price - risk_per_stock;
+	p.loss_limit_price = stock_price - (stock_price/100) * 2;	
 
 	// 3 percent gain is reasonable.
 	p.sell_off_price = stock_price + (stock_price/100) * 3;	
