@@ -57,7 +57,7 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 	open(db_file);
 	read_only=false;
 
-	sprintf(sql, "SELECT time, open, close, low, high, volume FROM candles ORDER BY time");
+	sprintf(sql, "SELECT id, time, open, close, low, high, volume FROM candles ORDER BY time");
 	if(debug) {
 		log.log("%s", sql);
 	}
@@ -66,12 +66,13 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 
 	for(;sqlite3_step(s) == SQLITE_ROW;) {
 		candle * c = new candle();
-		c->time = selectInt(s, 0);
-		c->open = selectFloat(s, 1);
-		c->close = selectFloat(s, 2);
-		c->low = selectFloat(s, 3);
-		c->high = selectFloat(s, 4);
-		c->volume = selectInt(s, 5);
+		c->id = selectInt(s, 0);
+		c->time = selectInt(s, 1);
+		c->open = selectFloat(s, 2);
+		c->close = selectFloat(s, 3);
+		c->low = selectFloat(s, 4);
+		c->high = selectFloat(s, 5);
+		c->volume = selectInt(s, 6);
 		candles->push_back(c);
 	}
 

@@ -221,7 +221,8 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 	log.log("Ticker: %s, time latest candle: %s", 
 		ticker.c_str(), date_to_string(latest->time).c_str());
 	if(latest->time > time_of_prv_candle) {
-		log.log("(%ld -> %s) - open/close: (%.5f,%.5f), sma50: %.5f, sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
+		log.log("id: %d, (%ld -> %s) - open/close: (%.5f,%.5f), sma50: %.5f, sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
+			latest->id,
 			latest->time,
 			date_to_time_string(latest->time).c_str(),
 			latest->open, 
@@ -247,6 +248,8 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 	}
 
 	finish(candles);
+
+	log.log("\n");
 }
 
 bool tradingbot::sma_crossover_strategy(std::vector<candle*> *candles, candle *candle) {
