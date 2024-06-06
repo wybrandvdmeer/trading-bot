@@ -105,7 +105,6 @@ void db_api::update_indicators(candle *c, float ** custom_ind) {
 
 	for(int idx=0; idx < 3; idx++) {
     	if(custom_ind[idx] != NULL) {
-			sprintf(sql2 + strlen(sql2), ", custom_ind%d = %f", idx + 1, *(custom_ind[idx]));
 			sprintf(sql2 + strlen(sql2), "%s custom_ind%d = %f",
 			idx != 0 ? "," : " ",
 			idx + 1, *(custom_ind[idx]));
