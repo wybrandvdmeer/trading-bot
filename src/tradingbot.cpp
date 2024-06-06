@@ -97,7 +97,7 @@ void tradingbot::trade(int top_gainers_idx) {
 
 		for(int idx=day_break_position + 1; idx < candles->size(); idx++) {
 			std::vector<candle*> * v = new std::vector<candle*>();
-			for(int idx2=0; idx2 < idx; idx2++) {
+			for(int idx2=0; idx2 <= idx; idx2++) {
 				v->push_back(candles->at(idx2));
 			}
 
@@ -194,6 +194,7 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 			candles->erase(it);
 		}
 	}
+
 
 	std::sort(candles->begin(), candles->end(), candle_cmp);
 
