@@ -2,7 +2,7 @@
 #include "macd_scavenging_strategy.h"
 #include "position.h"
 
-#define SELL_NEGATIVE_TREND_LENGTH 4
+#define SELL_NEGATIVE_TREND_LENGTH 5
 #define BUY_POSITIVE_TREND_LENGTH 2
 #define RELATIVE_HIST 0.1
 
@@ -30,10 +30,6 @@ bool macd_scavenging_strategy::trade(std::string ticker,
 	position * p = db->get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(strategy::ind->m.is_histogram_trending(SELL_NEGATIVE_TREND_LENGTH, false)) {
-			log.log("sell: histogram trend is negative.");
-			bSell = true;
-		} else
 		if(finished_for_the_day) {
 			log.log("sell: current candle is in closing window. Trading day is finished.");
 			bSell = true;
@@ -76,21 +72,18 @@ bool macd_scavenging_strategy::trade(std::string ticker,
 	if(candle->is_red()) {
  		log.log("no trade: candle is red."); 
 	} else
+	if(strategy::ind->m.get_macd(0) <= strategy::ind->m.get_signal(0)) {
+		log.log("no trade: macd(%f) is smaller then signal + set-point (%f + %f).",
+		strategy::ind->m.get_macd(0), 
+		strategy::ind->m.get_signal(0),
+		macd_set_point);
+	} else
 	if(!strategy::ind->m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
 		log.log("no trade: not a positive trend on the macd histogram.");
-	} else 
-	if(!strategy::ind->is_sma_50_200_diff_trending(SMA_50_200_POSITIVE_TREND_LENGTH, true)) {
-		log.log("no trade: not a positive trend on the sma-50/200 indicators.");
 	} else 
 	if(close_0 < strategy::ind->get_sma_200(0) + max_delta_close_sma_200) {
 		log.log("no trade: price (%f) is below sma200 (%f + %f).", close_0, strategy::ind->get_sma_200(0), 
 			max_delta_close_sma_200);
-	} else
-	if(strategy::ind->m.get_macd(0) <= strategy::ind->m.get_signal(0) + macd_set_point) {
-		log.log("no trade: macd(%f) is smaller then signal + set-point (%f + %f).",
-			strategy::ind->m.get_macd(0), 
-			strategy::ind->m.get_signal(0),
-			macd_set_point);
 	} else
 	if(!back_testing && time(0) - candle->time >= MAX_LAG_TIME) {
 		log.log("no trade: difference (%ld) candle time (%ld) vs current-time (%ld) is too great.",
