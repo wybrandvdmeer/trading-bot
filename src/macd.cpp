@@ -26,10 +26,10 @@ float macd::get_histogram(int offset) {
 
 bool macd::is_histogram_trending(int length, bool positive_trend) {
 	for(int idx=0; idx < length && idx < macd.size() - 1; idx++) {
-		if(positive_trend && get_histogram(idx) < get_histogram(idx + 1)) {
+		if(positive_trend && get_histogram(idx) <= get_histogram(idx + 1)) {
 			return false;
 		}
-		if(!positive_trend && get_histogram(idx) > get_histogram(idx + 1)) {
+		if(!positive_trend && get_histogram(idx) >= get_histogram(idx + 1)) {
 			return false;
 		} 
 	}
