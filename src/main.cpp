@@ -47,7 +47,7 @@ int main(int argc, char ** argv) {
 			log.log("Strategy should be macd or sma.");
 			exit(1);
 		}
-		t.strategy = std::string(strategy);
+		t.sstrategy = std::string(strategy);
 	}
 
 	char *db_file = getOptionValue(argv, argv + argc, "--db-file");

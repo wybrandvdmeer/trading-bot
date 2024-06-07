@@ -51,11 +51,9 @@ beurs nse begint om 15.30 localtime -> 9.30 EDT
 tradingbot::tradingbot() {
 	tradingbot::force = false;
 	tradingbot::debug = false;
-	tradingbot::disable_alpaca = false;
 	tradingbot::macd_set_point = 0;
 	tradingbot::time_of_prv_candle = 0;
-	tradingbot::strategy = "macd";
-	tradingbot::finished_for_the_day = false;
+	tradingbot::sstrategy = "macd";
 	tradingbot::slave = false;
 }
 
@@ -72,13 +70,27 @@ void tradingbot::trade(int top_gainers_idx) {
 	if(slave) {
 		tg.slave = true;
 	}
+		
 
-	db.strategy = strategy;
+	if(sstrategy == "macd") {
+		strat = new macd_scavenging_strategy(&db, &ind);
+	} else
+	if(sstrategy == "sma") {
+		strat = new sma_crossover_strategy(&db, &ind);
+	} else {
+		log.log("Unknown strategy.");
+		return;
+	}
 
+	if(disable_alpaca) {
+		strat->disable_alpaca = true;
+	}
+
+	db.strategy = sstrategy;
 	/* Back-testing against a db file. 
 	*/
 	if(!db_file.empty()) {
-		disable_alpaca = true;
+		strat->disable_alpaca = true;
 		std::string base_name = db_file.substr(db_file.find_last_of("/\\") + 1);
 		ticker = base_name.substr(0, base_name.find("-"));
 		db.ticker = ticker;
@@ -126,7 +138,8 @@ void tradingbot::trade(int top_gainers_idx) {
 			}
 			db.reset();
 			black_listed_tickers.clear();
-			finished_for_the_day = false;
+			strat->finished_for_the_day = false;
+
 			std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000)); 
 			continue;
 		}
@@ -234,219 +247,14 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 			ind.m.get_signal(0),
 			ind.m.get_histogram(0));
 
-		if(strategy == "macd") {
-			finished_for_the_day = macd_scavenging_strategy(candles, latest);
-		} else
-		if(strategy == "sma") {
-			finished_for_the_day = sma_crossover_strategy(candles, latest);
-		} else {
-			log.log("Unknown strategy.");
-			exit(1);
-		}
-	
+		strat->trade(ticker, candles, latest, max_delta_close_sma_200, !db_file.empty()); 
+
 		time_of_prv_candle = latest->time;
 	}
 
 	finish(candles);
 
 	log.log("\n");
-}
-
-bool tradingbot::sma_crossover_strategy(std::vector<candle*> *candles, candle *candle) {
-	float open_0 = candle->open;
-	float close_0 = candle->close;
-
-	if(finished_for_the_day) {
-		return true;
-	}
-
-	bool finished_for_the_day = candle_in_nse_closing_window(candle);
-	
-	position * p = db.get_open_position(ticker);
-	if(p != NULL) {
-		bool bSell = false;
-		if(ind.get_sma_50(0) - ind.get_sma_200(0) <= 0) { 
-			log.log("sell: sma_50 is below sma_200.");
-			bSell = true;
-		} else
-		if(finished_for_the_day) {
-			log.log("sell: current candle is in closing window. Trading day is finished.");
-			bSell = true;
-		} else
-		if(close_0 >= p->sell_off_price) {
-			p->stop_loss_activated = 0;
-			log.log("sell: current price (%f) is above selling price (%f)." ,
-				close_0 , p->sell_off_price);
-			bSell = true;
-		} else
-		if(close_0 <= p->loss_limit_price) {
-			p->stop_loss_activated = 1;
-			log.log("sell: current price (%f) is below stop-loss price (%f)." ,
-				close_0 , p->loss_limit_price);
-			bSell = true;
-		}
-
-		if(bSell) {
-			p->sell_price = close_0;
-
-			/* In case of back-testing, the candle time is leading. 
-			*/
-			if(db_file.empty()) {
-				p->sell = time(0);
-			} else {
-				p->sell = candle->time;
-			}
-			sell(p);
-
-			/* One shot per day. 
-			*/	
-			finished_for_the_day = true;
-		}
-
-		return finished_for_the_day;
-	}
-
-	/* Buy logic. 
-	*/
-	if(in_openings_window(candle->time)) { // for back-testing.
- 		log.log("no trade: Candle is still in openings window."); 
-	} else
-	if(!ind.is_sma_50_200_diff_trending(SMA_50_200_POSITIVE_TREND_LENGTH, true)) {
-		log.log("no trade: not a positive trend on the sma-50/200 indicators.");
-	} else 
-	if(close_0 < ind.get_sma_200(0) + max_delta_close_sma_200) {
-		log.log("no trade: price (%f) is below sma200 (%f + %f).", close_0, ind.get_sma_200(0), 
-			max_delta_close_sma_200);
-	} else
-	if(ind.get_sma_200(0) >= ind.get_sma_50(0)) {
-		log.log("no trade: sma_200(%f) is greater then sma_50(%f).",
-			ind.get_sma_200(0), 
-			ind.get_sma_50(0));
-	} else
-	if(!in_second_positive_sma_period(candles)) {
-		log.log("no trade: not in second positive sma period.");
-	} else 
-	if(db_file.empty() && time(0) - candle->time >= MAX_LAG_TIME) {
-		log.log("no trade: difference (%ld) candle time (%ld) vs current-time (%ld) is too great.",
-		time(0) - candle->time,
-		candle->time,
-		time(0));
-	} else {
-		buy(ticker, close_0, candle->time);
-	}
-
-	return false;
-}
-
-bool tradingbot::macd_scavenging_strategy(std::vector<candle*> *candles, candle *candle) {
-	float open_0 = candle->open;
-	float close_0 = candle->close;
-
-	if(finished_for_the_day) {
-		return true;
-	}
-
-	bool finished_for_the_day = candle_in_nse_closing_window(candle);
-	
-	position * p = db.get_open_position(ticker);
-	if(p != NULL) {
-		bool bSell = false;
-		if(ind.m.is_histogram_trending(SELL_NEGATIVE_TREND_LENGTH, false)) {
-			log.log("sell: histogram trend is negative.");
-			bSell = true;
-		} else
-		if(finished_for_the_day) {
-			log.log("sell: current candle is in closing window. Trading day is finished.");
-			bSell = true;
-		} else
-		if(ind.m.get_macd(0) <= ind.m.get_signal(0)) {
-			p->stop_loss_activated = 0;
-			log.log("sell: macd (%f) is below signal (%f)." ,
-				ind.m.get_macd(0) , ind.m.get_signal(0));
-			bSell = true;
-		} else
-		if(close_0 >= p->sell_off_price) {
-			p->stop_loss_activated = 0;
-			log.log("sell: current price (%f) is above selling price (%f)." ,
-				close_0 , p->sell_off_price);
-			bSell = true;
-		} else
-		if(close_0 <= p->loss_limit_price) {
-			p->stop_loss_activated = 1;
-			log.log("sell: current price (%f) is below stop-loss price (%f)." ,
-				close_0 , p->loss_limit_price);
-			bSell = true;
-		}
-
-		if(bSell) {
-			p->sell_price = close_0;
-
-			/* In case of back-testing, the candle time is leading. 
-			*/
-			if(db_file.empty()) {
-				p->sell = time(0);
-			} else {
-				p->sell = candle->time;
-			}
-			sell(p);
-		}
-
-		return finished_for_the_day;
-	}
-	
-	macd_set_point = get_macd_set_point(ind.m, candles);
-
-	/* Buy logic. 
-	*/
-	if(in_openings_window(candle->time)) { // for back-testing.
- 		log.log("no trade: Candle is still in openings window."); 
-	} else
-	if(!ind.m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
-		log.log("no trade: not a positive trend on the macd histogram.");
-	} else 
-	if(!ind.is_sma_50_200_diff_trending(SMA_50_200_POSITIVE_TREND_LENGTH, true)) {
-		log.log("no trade: not a positive trend on the sma-50/200 indicators.");
-	} else 
-	if(close_0 < ind.get_sma_200(0) + max_delta_close_sma_200) {
-		log.log("no trade: price (%f) is below sma200 (%f + %f).", close_0, ind.get_sma_200(0), 
-			max_delta_close_sma_200);
-	} else
-	if(ind.m.get_macd(0) <= ind.m.get_signal(0) + macd_set_point) {
-		log.log("no trade: macd(%f) is smaller then signal + set-point (%f + %f).",
-			ind.m.get_macd(0), 
-			ind.m.get_signal(0),
-			macd_set_point);
-	} else
-	if(db_file.empty() && time(0) - candle->time >= MAX_LAG_TIME) {
-		log.log("no trade: difference (%ld) candle time (%ld) vs current-time (%ld) is too great.",
-			time(0) - candle->time,
-			candle->time,
-			time(0));
-	} else {
-		buy(ticker, close_0, candle->time);
-	}
-
-	return false;
-}
-
-float tradingbot::get_macd_set_point(macd m, std::vector<candle*> *candles) {
-	int start = find_position_of_last_day(candles);
-	if(start == -1) {
-		log.log("Cannot find position of last day.");
-		return 0;
-	}
-
-	float max_hist=0;
-	for(int idx=start; idx < candles->size(); idx++) {
-		int day = candles->size() - idx;
-		if(max_hist < m.get_histogram(day)) {
-			max_hist = m.get_histogram(day);
-		}
-	}
-
-	log.log("Max histogram: %f", candles->size(), max_hist);
-
-	return RELATIVE_HIST * max_hist;
 }
 
 void tradingbot::finish(std::vector<candle*> * candles) {
@@ -467,49 +275,6 @@ void tradingbot::finish(std::vector<candle*> * candles) {
 	log.log("Deleted memory.");
 }
 
-void tradingbot::buy(std::string ticker, float stock_price, long buy_time) {
-	position p;
-	p.ticker = ticker;
-	p.no_of_stocks = (int)(200.0/stock_price);
-	p.stock_price = stock_price;
-	p.buy = buy_time;
-
-	if(p.no_of_stocks <= 0) {
-		log.log("No-of-stocks calculated is 0.");
-		return;
-	}
-
-	p.loss_limit_price = stock_price - (stock_price/100) * 2;	
-
-	// 3 percent gain is reasonable.
-	p.sell_off_price = stock_price + (stock_price/100) * 3;	
-
-	log.log("Buy (%s), price: %f, number: %d, sell_off_price: %f, loss-limit: %f", 
-		ticker.c_str(), 
-		p.stock_price,
-		p.no_of_stocks,
-		p.sell_off_price,
-		p.loss_limit_price);
-
-	if(disable_alpaca || alpaca.open_position(p)) {
-		db.open_position(p);
-	}
-}
-
-void tradingbot::sell(position *p) {
-	log.log("Sell (%s), price: %f, number: %d, sell_price: %f, loss-limit: %f, stop_loss_activated: %d", 
-		ticker.c_str(), 
-		p->stock_price,
-		p->no_of_stocks,
-		p->sell_price,
-		p->loss_limit_price,
-		p->stop_loss_activated);
-
-	if(disable_alpaca || alpaca.close_position(*p)) {
-		db.close_position(*p);
-	}
-}
-	
 bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 	if(candles->size() < 100) {
 		log.log("Q of candles too low: not enough (%ld) candles.", candles->size());

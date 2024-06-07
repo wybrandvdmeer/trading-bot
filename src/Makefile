@@ -5,12 +5,22 @@ FLAGS = -std=c++20
 LIBS = -lcurl -lsqlite3 -lalpaca_client
 
 $(EXE): main.o download.o yahoo_api.o candle.o tradingbot.o db_api.o logger.o indicators.o macd.o \
-		top_gainers.o alpaca_api.o
-	g++ -Wall -o $(EXE) main.o download.o yahoo_api.o candle.o db_api.o tradingbot.o logger.o \
-		indicators.o macd.o top_gainers.o alpaca_api.o $(LIBS)
+		top_gainers.o alpaca_api.o strategy.o macd_scavenging_strategy.o sma_crossover_strategy.o
+	g++ -Wall -o $(EXE) download.o yahoo_api.o candle.o db_api.o logger.o \
+		indicators.o macd.o top_gainers.o alpaca_api.o strategy.o sma_crossover_strategy.o \
+		macd_scavenging_strategy.o tradingbot.o main.o $(LIBS)
 
 main.o: main.cpp
 	g++ $(FLAGS) -c main.cpp
+
+strategy.o: strategy.cpp strategy.h
+	g++ $(FLAGS) -c strategy.cpp
+
+sma_crossover_strategy.o: sma_crossover_strategy.cpp strategy.h strategy.cpp
+	g++ $(FLAGS) -c sma_crossover_strategy.cpp
+
+macd_scavenging_strategy.o: macd_scavenging_strategy.cpp strategy.h strategy.cpp
+	g++ $(FLAGS) -c macd_scavenging_strategy.cpp
 
 alpaca_api.o: alpaca_api.cpp alpaca_api.h
 	g++ $(FLAGS) -c alpaca_api.cpp

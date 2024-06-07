@@ -5,6 +5,9 @@
 #include "indicators.h"
 #include "top_gainers.h"
 #include "alpaca_api.h"
+#include "strategy.h"
+#include "sma_crossover_strategy.h"
+#include "macd_scavenging_strategy.h"
 
 #ifndef TRADINGBOT_H
 #define TRADINGBOT_H
@@ -12,10 +15,11 @@
 class tradingbot {
 public:
 	tradingbot();
-	std::string ticker, db_file, strategy;
+	std::string ticker, db_file, sstrategy;
 	void trade(int top_gainer_idx);
-	bool force, debug, disable_alpaca, slave, finished_for_the_day;
+	bool force, debug, slave, disable_alpaca;
 private:
+	strategy *strat;
 	float max_delta_close_sma_200, macd_set_point;
 	int time_of_prv_candle;
 	top_gainers tg;
@@ -26,12 +30,8 @@ private:
 	alpaca_api alpaca;
 	std::vector<std::string> black_listed_tickers;
 	void trade(std::vector<candle*> * candles);
-	bool macd_scavenging_strategy(std::vector<candle*> *candles, candle * candle);
-	bool sma_crossover_strategy(std::vector<candle*> *candles, candle * candle);
 	bool nse_is_open();
 	bool candle_in_nse_closing_window(candle * c);
-	void buy(std::string ticker, float stock_price, long buy_time);
-	void sell(position * p);
 	bool get_quality_candles(std::vector<candle*> *candles);
 	void finish(std::vector<candle*> *candles);
 	std::string date_to_string(long ts);
@@ -41,7 +41,6 @@ private:
 	bool in_openings_window(long current_time);
 	int get_top_gainer(std::vector<std::string> * top_gainers, 
 		std::vector<std::string> black_listed_tickers, int top_gainers_idx);
-	float get_macd_set_point(macd m, std::vector<candle*> *candles);
 	int get_gmt_midnight();
 	bool in_second_positive_sma_period(std::vector<candle*> * candles);
 };
