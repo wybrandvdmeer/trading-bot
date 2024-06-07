@@ -176,7 +176,7 @@ void db_api::update_candle(std::string ticker, candle c) {
 	open();
 	char sql[1000];
 	sprintf(sql, "UPDATE candles SET open = %.16f, close = %.16f, low = %.16f, high = %.16f, \
-		volume = %ld WHERE time = %ld AND ticker = %s",
+		volume = %ld WHERE time = %ld AND ticker = '%s'",
 		c.open,
 		c.close,
 		c.low,
