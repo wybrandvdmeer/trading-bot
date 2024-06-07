@@ -19,6 +19,14 @@ candle::candle(
 	candle::adjustedClose = adjustedClose;
 }
 
+bool candle::is_green() {
+	return close > open;
+}
+
+bool candle::is_red() {
+	return close <= open;
+}
+
 bool candle::equals(candle c) {
 	return time == c.time &&
 		open == c.open &&
