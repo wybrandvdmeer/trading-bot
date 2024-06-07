@@ -29,5 +29,6 @@ bool candle::equals(candle c) {
 }
 
 bool candle::is_valid() {
-	return open > 0 && close > 0;
+	// The last yahoo candle has always the same values.
+	return open > 0 && close > 0 && !(open == close && close == low && low == high);
 }
