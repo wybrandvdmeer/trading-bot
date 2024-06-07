@@ -58,15 +58,8 @@ bool macd_scavenging_strategy::trade(std::string ticker,
 		}
 
 		if(bSell) {
+			p->sell = candle->time;
 			p->sell_price = close_0;
-
-			/* In case of back-testing, the candle time is leading. 
-			*/
-			if(back_testing) {
-				p->sell = time(0);
-			} else {
-				p->sell = candle->time;
-			}
 			sell(p);
 		}
 
