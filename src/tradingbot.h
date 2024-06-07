@@ -31,14 +31,12 @@ private:
 	std::vector<std::string> black_listed_tickers;
 	void trade(std::vector<candle*> * candles);
 	bool nse_is_open();
-	bool candle_in_nse_closing_window(candle * c);
 	bool get_quality_candles(std::vector<candle*> *candles);
 	void finish(std::vector<candle*> *candles);
 	std::string date_to_string(long ts);
 	std::string date_to_time_string(long ts);
 	void ema_test();
 	int find_position_of_last_day(std::vector<candle*> *candles);
-	bool in_openings_window(long current_time);
 	int get_top_gainer(std::vector<std::string> * top_gainers, 
 		std::vector<std::string> black_listed_tickers, int top_gainers_idx);
 	int get_gmt_midnight();

@@ -284,20 +284,6 @@ bool tradingbot::get_quality_candles(std::vector<candle*> *candles) {
 	return quality >= QUALITY_CANDLES;
 }
 
-bool tradingbot::candle_in_nse_closing_window(candle * c) {
-	time_t now = time(NULL);
-	struct tm *tm_struct = gmtime(&now);
-
-	tm_struct->tm_hour = 19;
-	tm_struct->tm_min = 45;
-	tm_struct->tm_sec = 0;
-
-	long ts = timegm(tm_struct)%(24 * 3600);
-	long ts_candle = (c->time)%(24 * 3600);
-
-	return ts <= ts_candle && ts_candle < ts + 15 * 60;
-}
-
 bool tradingbot::nse_is_open() {
 	time_t now = time(NULL);
 	struct tm *tm_struct = gmtime(&now);
@@ -327,20 +313,6 @@ std::string tradingbot::date_to_time_string(long ts) {
 		t->tm_min, 
 		t->tm_sec);
 	return std::string(buf);
-}
-
-bool tradingbot::in_openings_window(long current_time) {
-	time_t now = time(NULL);
-	struct tm *tm_struct = gmtime(&now);
-
-	tm_struct->tm_hour = 13;
-	tm_struct->tm_min = 30;
-	tm_struct->tm_sec = 0;
-
-	long ts = timegm(tm_struct)%(24 * 3600);
-	current_time = current_time%(24 * 3600);
-
-	return ts <= current_time && current_time < ts + OPENINGS_WINDOW_IN_MIN * 60;
 }
 
 int tradingbot::get_gmt_midnight() {
