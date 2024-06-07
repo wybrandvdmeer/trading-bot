@@ -1,4 +1,7 @@
 #include <string>
+#include <ctime>
+
+#include "logger.h"
 
 #ifndef DOWNLOAD_H
 #define DOWNLOAD_H
@@ -9,11 +12,12 @@ public:
 	std::string request_bin_data(std::string url);
 	download();
 private:
-	ulong cookieDate;
-	std::string * cookie, crumb;
-	std::string getCrumb();
+	time_t cookie_time, crumb_time;
+	std::string cookie, crumb;
+	std::string get_crumb();
 	void fetchCookie();
 	std::string rq(std::string url, bool returnCookies=false);
+	logger log;
 };
 
 #endif

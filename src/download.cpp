@@ -2,15 +2,20 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <ctime>
 
 #include <curl/curl.h>
 
 #include "download.h"
 
+#define CRUMB_INTERVAL 3600
+#define COOKIE_INTERVAL 3600
+
 using namespace std;
 
 download::download() {
-	download::cookieDate = 0L;
+	download::crumb_time = 0;
+	download::cookie_time = 0;
 }
 
 struct data {
@@ -127,7 +132,7 @@ std::string download::request_bin_data(std::string url) {
 }
 
 std::string download::request(std::string url) {
-	url = url + "&crumb=" + getCrumb();
+	url = url + "&crumb=" + get_crumb();
 	return rq(url, false);
 }
 
@@ -146,10 +151,9 @@ std::string download::rq(std::string url, bool returnCookies) {
 
 	std::string body, cookies;
     if (curl) {
-		if(download::cookieDate != 0) {
+		if(!returnCookies && !cookie.empty()) {
 			std::string ck = "Cookie: ";
-    		ck.append(*download::cookie);
-
+    		ck.append(download::cookie);
 			headers = curl_slist_append(headers, ck.c_str()); 
 		}
 
@@ -181,17 +185,29 @@ std::string download::rq(std::string url, bool returnCookies) {
 }
 
 void download::fetchCookie() {
-	if(download::cookieDate != 0) {
+	ulong current_time = time(NULL);
+	if(current_time <= cookie_time) {
 		return;
 	}
 
+	log.log("Fetch cookie");
+
 	std::string c = rq("https://fc.yahoo.com", true);
 
-	download::cookie = new std::string(c);
-	download::cookieDate = 1;
+	download::cookie = std::string(c);
+	download::cookie_time = COOKIE_INTERVAL + current_time;
 }
 
-std::string download::getCrumb() {
+std::string download::get_crumb() {
+	time_t current_time = time(NULL);
+	if(current_time <= crumb_time) {
+		return crumb;
+	}
+
+	log.log("Fetch crumb");
+
 	fetchCookie();
-	return rq("https://query1.finance.yahoo.com/v1/test/getcrumb", false);
+	download::crumb = rq("https://query1.finance.yahoo.com/v1/test/getcrumb", false);
+	crumb_time = CRUMB_INTERVAL + current_time;
+	return download::crumb;
 }
