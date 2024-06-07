@@ -14,18 +14,8 @@
 
 using namespace std;
 
-#define SELL_NEGATIVE_TREND_LENGTH 4
-#define BUY_POSITIVE_TREND_LENGTH 2
-
-#define SMA_50_200_POSITIVE_TREND_LENGTH 3
-
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
-
-// Setting of 0.5 causes to catch only the main trade. 
-// When 0 the buying selling is only done whem macd > signal and positive/negative trend.
-// Alpaca charges low commision.
-#define RELATIVE_HIST 0.1
 
 // Om ons te beschermen tegen pre-market buying en dan bij opening Selling scenario's.
 #define OPENINGS_WINDOW_IN_MIN 10
@@ -33,8 +23,6 @@ using namespace std;
 
 // Only buy when price has exceed sma + sma * SMA_RELATIVE_DISTANCE
 #define SMA_RELATIVE_DISTANCE 0.05
-
-#define MAX_LAG_TIME 90
 
 /* 
 Gap & Go: identificeer een hogere opening tov de vorige dag en lift dan mee na bijv de 1e pull back.
@@ -70,7 +58,6 @@ void tradingbot::trade(int top_gainers_idx) {
 	if(slave) {
 		tg.slave = true;
 	}
-		
 
 	if(sstrategy == "macd") {
 		strat = new macd_scavenging_strategy(&db, &ind);
@@ -87,6 +74,7 @@ void tradingbot::trade(int top_gainers_idx) {
 	}
 
 	db.strategy = sstrategy;
+
 	/* Back-testing against a db file. 
 	*/
 	if(!db_file.empty()) {
@@ -420,27 +408,3 @@ int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
 	}
 	return day_break_position;
 }
-
-bool tradingbot::in_second_positive_sma_period(std::vector<candle*> * candles) {
-	int start = find_position_of_last_day(candles);
-	if(start == -1) {
-		log.log("Cannot find position of last day.");
-		return false;
-	}
-	int period=0;
-
-	bool sma_positive = false;
-	for(int idx=start; idx < ind.sma_50.size(); idx++) {
-		if(ind.sma_50.at(idx) > ind.sma_200.at(idx)) {
-			if(!sma_positive) {
-				sma_positive = true;
-				period++;
-			}
-		} else {
-			sma_positive = false;
-		}
-	}
-
-	return period == 2 && sma_positive;
-}
-

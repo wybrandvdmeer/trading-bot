@@ -42,7 +42,6 @@ private:
 	int get_top_gainer(std::vector<std::string> * top_gainers, 
 		std::vector<std::string> black_listed_tickers, int top_gainers_idx);
 	int get_gmt_midnight();
-	bool in_second_positive_sma_period(std::vector<candle*> * candles);
 };
 
 #endif
