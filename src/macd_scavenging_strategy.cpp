@@ -4,7 +4,7 @@
 
 #define SELL_NEGATIVE_TREND_LENGTH 5
 #define BUY_POSITIVE_TREND_LENGTH 2
-#define RELATIVE_HIST 0.1
+#define RELATIVE_HIST 0.3 // Results in getting only the first trade.
 
 using namespace std;
 
@@ -72,17 +72,18 @@ bool macd_scavenging_strategy::trade(std::string ticker,
 	if(candle->is_red()) {
  		log.log("no trade: candle is red."); 
 	} else
-	if(strategy::ind->m.get_macd(0) <= strategy::ind->m.get_signal(0)) {
-		log.log("no trade: macd(%f) is smaller then signal + set-point (%f + %f).",
+	if(strategy::ind->m.get_macd(0) <= strategy::ind->m.get_signal(0) + macd_set_point) {
+		log.log("no trade: macd(%f) is smaller then signal (%f).",
 		strategy::ind->m.get_macd(0), 
-		strategy::ind->m.get_signal(0),
-		macd_set_point);
+		strategy::ind->m.get_signal(0));
 	} else
 	if(!strategy::ind->m.is_histogram_trending(BUY_POSITIVE_TREND_LENGTH, true)) {
 		log.log("no trade: not a positive trend on the macd histogram.");
 	} else 
 	if(close_0 < strategy::ind->get_sma_200(0) + max_delta_close_sma_200) {
-		log.log("no trade: price (%f) is below sma200 (%f + %f).", close_0, strategy::ind->get_sma_200(0), 
+		log.log("no trade: price (%f) is below sma200 (%f + %f).", 
+			close_0, 
+			strategy::ind->get_sma_200(0), 
 			max_delta_close_sma_200);
 	} else
 	if(!back_testing && time(0) - candle->time >= MAX_LAG_TIME) {
