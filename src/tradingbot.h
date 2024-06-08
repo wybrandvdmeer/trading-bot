@@ -8,6 +8,7 @@
 #include "strategy.h"
 #include "sma_crossover_strategy.h"
 #include "macd_scavenging_strategy.h"
+#include "dip_and_rip_strategy.h"
 
 #ifndef TRADINGBOT_H
 #define TRADINGBOT_H

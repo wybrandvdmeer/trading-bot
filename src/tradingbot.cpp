@@ -62,6 +62,9 @@ void tradingbot::trade(int top_gainers_idx) {
 	if(sstrategy == "macd") {
 		strat = new macd_scavenging_strategy(&db, &ind);
 	} else
+	if(sstrategy == "dip") {
+		strat = new dip_and_rip_strategy(&db, &ind);
+	} else 
 	if(sstrategy == "sma") {
 		strat = new sma_crossover_strategy(&db, &ind);
 	} else {
