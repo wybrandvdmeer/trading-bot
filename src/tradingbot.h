@@ -19,7 +19,7 @@ class tradingbot {
 public:
 	tradingbot();
 	std::string ticker, db_file, strategy;
-	void trade(int top_gainer_idx);
+	void trade();
 	bool force, debug, disable_alpaca;
 private:
 	class strategy *strat;

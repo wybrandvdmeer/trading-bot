@@ -53,7 +53,7 @@ tradingbot::tradingbot() {
 	tradingbot::strategy = "macd";
 }
 
-void tradingbot::trade(int top_gainers_idx) {
+void tradingbot::trade() {
 	tradingbot::ticker = ticker;
 	bool schema_created = false;
 

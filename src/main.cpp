@@ -31,7 +31,6 @@ char* getOptionValue(char ** begin, char ** end, const std::string & option) {
 int main(int argc, char ** argv) {
 	logger log;
 	tradingbot t;
-	int top_gainer_position=0;
 			
 	log.log("Starting bot.");
 	
@@ -55,11 +54,6 @@ int main(int argc, char ** argv) {
 		t.db_file = std::string(db_file);
 	}
 
-	char *tgp = getOptionValue(argv, argv + argc, "--top-gainer-position");
-	if(tgp != NULL) {
-		top_gainer_position = atoi(tgp);
-	}
-
 	char *forceOption = getOption(argv, argv + argc, "--force");
 	if(forceOption != NULL) {
 		t.force = true;
@@ -78,5 +72,5 @@ int main(int argc, char ** argv) {
 	if(ticker != NULL) {
 		t.ticker = ticker;
 	}
-	t.trade(top_gainer_position);
+	t.trade();
 }
