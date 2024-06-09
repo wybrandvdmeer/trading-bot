@@ -359,7 +359,7 @@ void tradingbot::ema_test() {
 
 std::unique_ptr<std::string> 
 	tradingbot::get_top_gainer(std::vector<std::string> black_listed_tickers) {
-	vector<std::string> * top_gainers = top_gainers = tg.get();
+	vector<std::string> * top_gainers = tg.get();
 	if(top_gainers == NULL) {
 		return std::unique_ptr<std::string>{};
 	}
