@@ -393,7 +393,7 @@ int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
 }
 
 bool tradingbot::lock(std::string ticker) {
-	std::string dir = LOCK_DIR + get_sysdate();
+	std::string dir = LOCK_DIR + strategy + "-" + get_sysdate();
 	std::filesystem::create_directory(dir);
 	
 	int fd = open((dir + "/" + ticker).c_str(), O_CREAT | O_EXCL, 0644);
