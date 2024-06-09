@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "logger.h"
 #include "position.h"
 #include "db_api.h"
@@ -16,11 +18,11 @@
 class tradingbot {
 public:
 	tradingbot();
-	std::string ticker, db_file, sstrategy;
+	std::string ticker, db_file, strategy;
 	void trade(int top_gainer_idx);
-	bool force, debug, slave, disable_alpaca;
+	bool force, debug, disable_alpaca;
 private:
-	strategy *strat;
+	class strategy *strat;
 	float max_delta_close_sma_200, macd_set_point;
 	int time_of_prv_candle;
 	top_gainers tg;
@@ -38,9 +40,10 @@ private:
 	std::string date_to_time_string(long ts);
 	void ema_test();
 	int find_position_of_last_day(std::vector<candle*> *candles);
-	int get_top_gainer(std::vector<std::string> * top_gainers, 
-		std::vector<std::string> black_listed_tickers, int top_gainers_idx);
+	std::unique_ptr<std::string> get_top_gainer(std::vector<std::string> black_listed_tickers);
 	int get_gmt_midnight();
+	bool lock(std::string ticker);
+	std::string get_sysdate();
 };
 
 #endif

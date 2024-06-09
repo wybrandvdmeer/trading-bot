@@ -2,6 +2,13 @@
 #include <chrono>
 #include <thread>
 #include <ctime>
+#include <memory>
+#include <filesystem>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "candle.h"
 #include "position.h"
@@ -13,6 +20,8 @@
 #include "tradingbot.h"
 
 using namespace std;
+
+#define LOCK_DIR "/tmp/tickers-"
 
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
@@ -41,13 +50,11 @@ tradingbot::tradingbot() {
 	tradingbot::debug = false;
 	tradingbot::macd_set_point = 0;
 	tradingbot::time_of_prv_candle = 0;
-	tradingbot::sstrategy = "macd";
-	tradingbot::slave = false;
+	tradingbot::strategy = "macd";
 }
 
 void tradingbot::trade(int top_gainers_idx) {
 	tradingbot::ticker = ticker;
-	vector<std::string> * top_gainers=NULL;
 	bool schema_created = false;
 
 	if(debug) {
@@ -55,17 +62,13 @@ void tradingbot::trade(int top_gainers_idx) {
 		db.debug = true;
 	}
 
-	if(slave) {
-		tg.slave = true;
-	}
-
-	if(sstrategy == "macd") {
+	if(strategy == "macd") {
 		strat = new macd_scavenging_strategy(&db, &ind);
 	} else
-	if(sstrategy == "dip") {
+	if(strategy == "dip") {
 		strat = new dip_and_rip_strategy(&db, &ind);
 	} else 
-	if(sstrategy == "sma") {
+	if(strategy == "sma") {
 		strat = new sma_crossover_strategy(&db, &ind);
 	} else {
 		log.log("Unknown strategy.");
@@ -76,7 +79,7 @@ void tradingbot::trade(int top_gainers_idx) {
 		strat->disable_alpaca = true;
 	}
 
-	db.strategy = sstrategy;
+	db.strategy = strategy;
 
 	/* Back-testing against a db file. 
 	*/
@@ -136,13 +139,12 @@ void tradingbot::trade(int top_gainers_idx) {
 		}
 
 		if(tradingbot::ticker.empty()) {
-			top_gainers = tg.get();
-			int tg_idx = get_top_gainer(top_gainers, black_listed_tickers, top_gainers_idx);
-			if(tg_idx == -1) { 
+			std::unique_ptr<std::string> u = get_top_gainer(black_listed_tickers);
+			if(!u) { 
 				log.log("No top gainers.");
 			} else {
-				tradingbot::ticker = top_gainers->at(tg_idx);
 				schema_created = false;
+				ticker = *u;
 			}
 		}
 
@@ -162,7 +164,12 @@ void tradingbot::trade(int top_gainers_idx) {
 						tradingbot::ticker.erase();
 						sleep = 1;
 					}
-				} else {
+				} else if(!lock(ticker)) {
+					log.log("Ticker (%s) is locked.", ticker.c_str());
+					tradingbot::black_listed_tickers.push_back(ticker);
+					tradingbot::ticker.erase();
+					sleep = 1;
+				} else { 
 					if(!schema_created) {	
 						db.create_schema();
 						schema_created = true;
@@ -175,8 +182,6 @@ void tradingbot::trade(int top_gainers_idx) {
 
 					trade(candles);
 				}
-			} else {
-				log.log("No candles received");
 			}
 		}
 
@@ -352,20 +357,23 @@ void tradingbot::ema_test() {
 	exit(0);
 }
 
-int tradingbot::get_top_gainer(std::vector<std::string> * top_gainers, 
-	std::vector<std::string> black_listed_tickers, int top_gainers_idx) {
+std::unique_ptr<std::string> 
+	tradingbot::get_top_gainer(std::vector<std::string> black_listed_tickers) {
+	vector<std::string> * top_gainers = top_gainers = tg.get();
+	if(top_gainers == NULL) {
+		return std::unique_ptr<std::string>{};
+	}
 
 	int idx=0;
     for(auto t : *top_gainers) {
-		if(idx%3 == top_gainers_idx && 
-			std::find(black_listed_tickers.begin(), 
-			black_listed_tickers.end(), t) == black_listed_tickers.end()) {
-			return idx;
+		if(std::find(black_listed_tickers.begin(), black_listed_tickers.end(), t) 
+			== black_listed_tickers.end()) {
+			std::unique_ptr<std::string> p = std::make_unique<std::string>(t);
+			return p;
 		}
-		idx++;
 	}
 
-	return -1;
+	return std::unique_ptr<std::string>{};
 }
 
 int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
@@ -382,4 +390,24 @@ int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
         idx++;
 	}
 	return day_break_position;
+}
+
+bool tradingbot::lock(std::string ticker) {
+	std::string dir = LOCK_DIR + get_sysdate();
+	std::filesystem::create_directory(dir);
+	
+	int fd = open((dir + "/" + ticker).c_str(), O_CREAT | O_EXCL, 0644);
+	close(fd);
+	return fd >= 0;
+}
+
+std::string tradingbot::get_sysdate() {
+	time_t ts = time(0);
+	struct tm *t = localtime(&ts);
+	char buf[100];
+	sprintf(buf, "%d-%02d-%02d", 
+		t->tm_year + 1900, 
+		t->tm_mon + 1, 
+		t->tm_mday);
+	return std::string(buf);
 }

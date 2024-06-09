@@ -23,7 +23,6 @@ void logger::log(const char* fmt, ...) {
 	cout << buf << std::flush;
 }
 
-
 std::string logger::get_date() {
 	time_t ts = time(0);
 	struct tm *t = localtime(&ts);

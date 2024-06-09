@@ -47,7 +47,7 @@ int main(int argc, char ** argv) {
 			log.log("Strategy should be macd, dip or sma.");
 			exit(1);
 		}
-		t.sstrategy = std::string(strategy);
+		t.strategy = std::string(strategy);
 	}
 
 	char *db_file = getOptionValue(argv, argv + argc, "--db-file");
@@ -63,11 +63,6 @@ int main(int argc, char ** argv) {
 	char *forceOption = getOption(argv, argv + argc, "--force");
 	if(forceOption != NULL) {
 		t.force = true;
-	}
-	
-	char *slaveOption = getOption(argv, argv + argc, "--slave");
-	if(slaveOption != NULL) {
-		t.slave = true;
 	}
 	
 	char *debug_option = getOption(argv, argv + argc, "--debug");
