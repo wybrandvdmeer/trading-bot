@@ -131,6 +131,7 @@ void tradingbot::trade() {
 				ticker.erase();
 			}
 			db.reset();
+			has_lock = false;
 			black_listed_tickers.clear();
 			strat->finished_for_the_day = false;
 
@@ -393,12 +394,20 @@ int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
 }
 
 bool tradingbot::lock(std::string ticker) {
+	if(has_lock) {
+		return true;
+	}
+
 	std::string dir = LOCK_DIR + strategy + "-" + get_sysdate();
 	std::filesystem::create_directory(dir);
 	
 	int fd = open((dir + "/" + ticker).c_str(), O_CREAT | O_EXCL, 0644);
 	close(fd);
-	return fd >= 0;
+	
+	if(fd >= 0) {
+		has_lock = true;
+	}
+	return has_lock;
 }
 
 std::string tradingbot::get_sysdate() {

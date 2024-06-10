@@ -136,7 +136,7 @@ void db_api::insert_candle(std::string ticker, candle *c, float macd, float sign
 		/* Yahoo can correct their candles. If so, we have to update the candle.
 		*/
 		if(!candle.equals(*c)) {
-			log.log("Update candle (%s,%ld)", ticker, c->time);
+			log.log("Update candle (%s,%ld)", ticker.c_str(), c->time);
 			update_candle(ticker, *c);
 		}
 		return;
