@@ -62,7 +62,7 @@ bool macd_scavenging_strategy::trade(std::string ticker,
 		return finished_for_the_day;
 	}
 	
-	float macd_set_point = get_macd_set_point(strategy::strategy::ind->m, candles);
+	float macd_set_point = get_macd_set_point(strategy::ind->m, candles);
 
 	/* Buy logic. 
 	*/
