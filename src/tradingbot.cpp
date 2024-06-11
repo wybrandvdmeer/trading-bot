@@ -89,7 +89,7 @@ void tradingbot::trade() {
 		ticker = base_name.substr(0, base_name.find("-"));
 		db.ticker = ticker;
 		db.drop_db();
-		db.create_schema();
+		db.create_schema(id);
 
 		std::vector<candle*> *candles = db.get_candles(db_file);
 
@@ -125,13 +125,18 @@ void tradingbot::trade() {
 		return;
 	}
 
+	std::unique_ptr<std::string> t = get_ticker_from_db();
+	if(t) {
+		ticker = *t;
+		remove_lock(ticker);
+	}
+
 	while(true) {
 		if(!tradingbot::force && !nse_is_open()) {
 			if(!ticker.empty()) {
 				ticker.erase();
 			}
 			db.reset();
-			has_lock = false;
 			black_listed_tickers.clear();
 			strat->finished_for_the_day = false;
 
@@ -172,7 +177,7 @@ void tradingbot::trade() {
 					sleep = 1;
 				} else { 
 					if(!schema_created) {	
-						db.create_schema();
+						db.create_schema(tradingbot::id);
 						schema_created = true;
 					}
 
@@ -394,29 +399,51 @@ int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
 }
 
 bool tradingbot::lock(std::string ticker) {
-	if(has_lock) {
-		return true;
-	}
-
 	std::string dir = LOCK_DIR + strategy + "-" + get_sysdate();
 	std::filesystem::create_directory(dir);
 	
 	int fd = open((dir + "/" + ticker).c_str(), O_CREAT | O_EXCL, 0644);
 	close(fd);
-	
-	if(fd >= 0) {
-		has_lock = true;
-	}
-	return has_lock;
+	return fd >= 0;
+}
+
+void tradingbot::remove_lock(std::string ticker) {
+	std::string lock = LOCK_DIR + strategy + "-" + get_sysdate() + "/" + ticker;
+	log.log("Remove lock on ticker: %s", ticker.c_str());
+	std::remove(lock.c_str());
 }
 
 std::string tradingbot::get_sysdate() {
 	time_t ts = time(0);
 	struct tm *t = localtime(&ts);
 	char buf[100];
-	sprintf(buf, "%d-%02d-%02d", 
+	sprintf(buf, "%d%02d%02d", 
 		t->tm_year + 1900, 
 		t->tm_mon + 1, 
 		t->tm_mday);
 	return std::string(buf);
+}
+
+std::unique_ptr<std::string> tradingbot::get_ticker_from_db() {
+	std::string sysdate = get_sysdate();
+	for(auto entry : filesystem::directory_iterator("/db-files")) {
+		std::string db_file = entry.path().string();
+		if(db_file.find(sysdate) == std::string::npos) {
+			continue;
+		}
+		int id = db.get_owner_of_db_file(db_file);
+		if(id == -1) {
+			continue;
+		}
+		if(id == tradingbot::id) {
+			std::filesystem::path p(db_file);
+			log.log("Found previous datafile: %s, continuing with it.", p.filename().c_str());
+    		
+			std::stringstream ss(p.filename());
+    		std::string t;
+    		std::getline(ss, t, '-');
+			return std::make_unique<std::string>(t);
+		}
+	}
+	return std::unique_ptr<std::string>{};
 }

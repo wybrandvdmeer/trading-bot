@@ -20,7 +20,8 @@ public:
 	tradingbot();
 	std::string ticker, db_file, strategy;
 	void trade();
-	bool force, debug, disable_alpaca, has_lock=false;
+	bool force, debug, disable_alpaca;
+	int id=0;
 private:
 	class strategy *strat;
 	float max_delta_close_sma_200, macd_set_point;
@@ -43,7 +44,9 @@ private:
 	std::unique_ptr<std::string> get_top_gainer(std::vector<std::string> black_listed_tickers);
 	int get_gmt_midnight();
 	bool lock(std::string ticker);
+	void remove_lock(std::string ticker);
 	std::string get_sysdate();
+	std::unique_ptr<std::string> get_ticker_from_db();
 };
 
 #endif

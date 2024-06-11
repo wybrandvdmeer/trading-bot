@@ -20,7 +20,7 @@ public:
 	db_api();
 
 	void reset();
-	void create_schema();
+	void create_schema(int id);
 	void drop_db();
 	position * get_open_position(std::string ticker);
 	void open_position(position p);
@@ -30,11 +30,13 @@ public:
 	std::vector<position*> *get_closed_positions();
 	float select_max_delta_close_sma_200();
 	int select_max_candle_time();
+	int get_owner_of_db_file(std::string db_file);
 private:
 	long max_candle_time;
 	sqlite3 * db;
 	void open();
 	void open(std::string db_file);
+	void open(std::string db_file, int timeout);
 	void execDml(std::string sql);
 	void execDml(std::string sql, bool ignore_error);
 	void close();

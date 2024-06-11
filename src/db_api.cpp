@@ -18,6 +18,31 @@ db_api::db_api() {
 	max_candle_time = 0L;
 }
 
+int db_api::get_owner_of_db_file(std::string db_file) {
+	char sql[1000];
+
+	open(db_file, 5000); // timeout, because function looks in db-files of other bots (tbl-lock).
+
+	sprintf(sql, "SELECT value FROM config WHERE id = 'tb-id'");
+
+	if(debug) {
+		log.log("%s", sql);
+	}
+
+	sqlite3_stmt * s = prepare(std::string(sql));
+	const char * error = sqlite3_errmsg(db);
+
+	if(error != NULL && strncmp("no such table", error, 13) == 0) {
+		return -1;	
+	}
+
+	sqlite3_step(s);
+
+	std::string id = selectString(s, 0);
+	close(s);
+	return std::stoi(id);
+}
+
 std::vector<position*> * db_api::get_closed_positions() {
 	char sql[1000];
 	std::vector<position*> *positions = new std::vector<position*>();
@@ -377,11 +402,18 @@ void db_api::open() {
 }
 
 void db_api::open(std::string db_file) {
+	open(db_file, 0);
+}
+void db_api::open(std::string db_file, int timeout) {
 	int ret;
 	if(read_only) {
 		ret = sqlite3_open_v2(db_file.c_str(), &db, SQLITE_OPEN_READONLY , NULL);
 	} else {
 		ret = sqlite3_open_v2(db_file.c_str(), &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE , NULL);
+	}
+
+	if(timeout > 0) {
+		sqlite3_busy_timeout(db, timeout);
 	}
 
 	if(ret != SQLITE_OK) {
@@ -425,7 +457,9 @@ end:
 	close(stmt);
 }
 
-void db_api::create_schema() {
+void db_api::create_schema(int id) {
+	open();
+	execDml("CREATE TABLE config (id VARCHAR(50) PRIMARY KEY, value VARCHAR(50))", true);
 	open();
 	execDml("CREATE TABLE positions (id INTEGER NOT NULL, ticker VARCHAR(10), buy_time INTEGER , \
 		sell_time INTEGER, no_of_stocks INTEGER, stock_price REAL, sell_price REAL, \
@@ -435,6 +469,11 @@ void db_api::create_schema() {
 			close REAL, low REAL, high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL, \
 			sma_50 REAL, custom_ind1 REAL, custom_ind2 REAL, custom_ind3 REAL)", 
 			true);
+
+	open();
+	char sql[1000];
+	sprintf(sql, "INSERT INTO config VALUES('tb-id', %d)", id);
+	execDml(sql);
 }
 
 sqlite3_stmt * db_api::prepare(std::string sql) {
@@ -443,9 +482,9 @@ sqlite3_stmt * db_api::prepare(std::string sql) {
 
 	if(sqlite3_prepare(db, sql.c_str(), -1, &statement, NULL) != SQLITE_OK) {
         printf("ERROR: while preparing sql: %s\n", sqlite3_errmsg(db));
-		exit(1);
+		return NULL;
 	}
-    
+
 	return statement;
 }
 

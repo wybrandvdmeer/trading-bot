@@ -39,6 +39,11 @@ int main(int argc, char ** argv) {
 		t.ticker = std::string(ticker);
 	}
 
+	char *id = getOptionValue(argv, argv + argc, "--id");
+	if(id != NULL) {
+		t.id = std::stoi(id);
+	}
+
 	char *strategy = getOptionValue(argv, argv + argc, "--strategy");
 	if(strategy != NULL) {
 		std:string s = std::string(strategy);
