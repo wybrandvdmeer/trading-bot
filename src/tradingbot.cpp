@@ -89,6 +89,7 @@ void tradingbot::trade() {
 		ticker = base_name.substr(0, base_name.find("-"));
 		db.ticker = ticker;
 		db.drop_db();
+		has_lock = false;
 		db.create_schema(id);
 
 		std::vector<candle*> *candles = db.get_candles(db_file);
@@ -399,18 +400,24 @@ int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
 }
 
 bool tradingbot::lock(std::string ticker) {
+	if(has_lock) {
+		return true;
+	}
+
 	std::string dir = LOCK_DIR + strategy + "-" + get_sysdate();
 	std::filesystem::create_directory(dir);
 	
 	int fd = open((dir + "/" + ticker).c_str(), O_CREAT | O_EXCL, 0644);
 	close(fd);
-	return fd >= 0;
+	has_lock = (fd >= 0);
+	return has_lock;
 }
 
 void tradingbot::remove_lock(std::string ticker) {
 	std::string lock = LOCK_DIR + strategy + "-" + get_sysdate() + "/" + ticker;
 	log.log("Remove lock on ticker: %s", ticker.c_str());
 	std::remove(lock.c_str());
+	has_lock = false;
 }
 
 std::string tradingbot::get_sysdate() {

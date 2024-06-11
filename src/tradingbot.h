@@ -20,7 +20,7 @@ public:
 	tradingbot();
 	std::string ticker, db_file, strategy;
 	void trade();
-	bool force, debug, disable_alpaca;
+	bool force, debug, disable_alpaca, has_lock=false;
 	int id=0;
 private:
 	class strategy *strat;
