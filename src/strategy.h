@@ -6,7 +6,7 @@
 #include "indicators.h"
 #include "alpaca_api.h"
 
-#define MAX_LAG_TIME 90
+#define MAX_LAG_TIME 120
 #define SMA_50_200_POSITIVE_TREND_LENGTH 3
 
 #ifndef STRATEGY_H
