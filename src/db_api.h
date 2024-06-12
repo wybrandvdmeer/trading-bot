@@ -58,6 +58,7 @@ private:
 	std::string get_data_file(bool uri);
 	void update_indicators(candle *c, float ** custom_ind);
 	int select_no_of_rows_of_table(std::string table);
+	sqlite3_stmt * execute_select(std::string sql);
 	logger log;
 };
 

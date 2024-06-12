@@ -27,17 +27,9 @@ int db_api::get_owner_of_db_file(std::string db_file) {
 
 	open_db(db_file, 5000); // timeout, because function looks in db-files of other bots (tbl-lock).
 
-	sprintf(sql, "SELECT value FROM config WHERE id = 'tb-id'");
+	sqlite3_stmt *s = execute_select("SELECT value FROM config WHERE id = 'tb-id'");
 
-	if(debug) {
-		log.log("%s", sql);
-	}
-
-	sqlite3_stmt * s = prepare(std::string(sql));
-
-	sqlite3_step(s);
-    
-	if(sqlite3_data_count(s) == 0) {
+	if(s == NULL) {
         close_db(s);
         return -1;
     }
@@ -232,21 +224,13 @@ void db_api::open_position(position p) {
 
 float db_api::select_max_delta_close_sma_200() {
     open_db();
-    char sql[1000];
 
-    sprintf(sql, "SELECT MAX(close - sma_200) FROM candles WHERE sma_200 IS NOT NULL");
-
-    if(debug) {
-        log.log("%s", sql);
-    }
-
-    sqlite3_stmt * s = prepare(std::string(sql));
-    sqlite3_step(s);
-
-    if(sqlite3_data_count(s) == 0) {
-        close_db(s);
-        return 0;
-    }
+    sqlite3_stmt *s = execute_select(
+		"SELECT MAX(close - sma_200) FROM candles WHERE sma_200 IS NOT NULL");
+	
+	if(s == NULL) {
+    	return 0;
+	}
 
     float max_sma_200 = selectFloat(s, 0);
 
@@ -256,18 +240,9 @@ float db_api::select_max_delta_close_sma_200() {
 
 int db_api::select_max_candle_time() {
     open_db();
-    char sql[1000];
 
-    sprintf(sql, "SELECT MAX(time) FROM candles");
-
-    if(debug) {
-        log.log("%s", sql);
-    }
-
-    sqlite3_stmt * s = prepare(std::string(sql));
-    sqlite3_step(s);
-
-    if(sqlite3_data_count(s) == 0) {
+    sqlite3_stmt *s = execute_select("SELECT MAX(time) FROM candles");
+    if(s == NULL) { 
         close_db(s);
         return 0;
     }
@@ -280,18 +255,10 @@ int db_api::select_max_candle_time() {
 
 int db_api::select_no_of_rows_of_table(std::string table) {
     open_db();
-    char sql[1000];
 
-    sprintf(sql, "SELECT COUNT(*) FROM %s", table.c_str());
+    sqlite3_stmt *s = execute_select("SELECT COUNT(*) FROM " + table);
 
-    if(debug) {
-        log.log("%s", sql);
-    }
-
-    sqlite3_stmt * s = prepare(std::string(sql));
-    sqlite3_step(s);
-
-    if(sqlite3_data_count(s) == 0) {
+    if(s == NULL) {
         close_db(s);
         return 0;
     }
@@ -310,14 +277,8 @@ candle db_api::get_candle(std::string ticker, candle *c) {
 		FROM candles WHERE ticker = '%s' AND time = %ld", 
 		ticker.c_str(), c->time);
 
-	if(debug) {
-		log.log("%s", sql);
-	}
-
-	sqlite3_stmt * s = prepare(std::string(sql));
-    sqlite3_step(s);
-
-	if(sqlite3_data_count(s) == 0) {
+	sqlite3_stmt * s = execute_select(std::string(sql));
+	if(s == NULL) {
 		close_db(s);
 		candle cc;
 		return cc;
@@ -342,10 +303,9 @@ position * db_api::get_open_position(std::string ticker) {
 	"SELECT id, buy_time, sell_time, no_of_stocks, stock_price, sell_off_price, loss_limit_price \
 		FROM positions WHERE ticker = '%s' AND sell_time IS NULL",
 		ticker.c_str());
-	sqlite3_stmt * s = prepare(std::string(sql));
-	sqlite3_step(s);
 
-	if(sqlite3_data_count(s) == 0) {
+	sqlite3_stmt * s = execute_select(std::string(sql));
+	if(s == NULL) {
 		close_db(s);
 		return NULL;
 	}
@@ -536,4 +496,19 @@ float db_api::selectFloat(sqlite3_stmt * statement, int column) {
 
 void db_api::reset() {
 	max_candle_time = 0L;
+}
+
+sqlite3_stmt * db_api::execute_select(std::string sql) {
+    if(debug) {
+        log.log("%s", sql);
+    }
+
+    sqlite3_stmt * s = prepare(std::string(sql));
+    sqlite3_step(s);
+
+    if(sqlite3_data_count(s) == 0) {
+        close_db(s);
+        return NULL;
+    }
+	return s;
 }
