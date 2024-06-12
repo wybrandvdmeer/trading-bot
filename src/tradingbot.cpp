@@ -118,7 +118,7 @@ void tradingbot::trade() {
 	}
 
 	if(ticker.empty()) {
-		log.log("Check todays datafiles is one is locked by this bot.");
+		log.log("Check todays datafiles if one is locked by this bot.");
 		std::unique_ptr<std::string> ticker_in_progress = get_ticker_from_db();
 		if(ticker_in_progress) {
 			ticker = *ticker_in_progress;
