@@ -1,9 +1,9 @@
 dir=$HOME/q
-strat=macd
+strat=sma
 
 rm -rf /db-files/*
 
-ls $dir/*$strat*.db | while read db
+ls $dir/*macd*.db | while read db
 do
 	echo Process db-file $db
 	./tb --db-file $db --strategy $strat | tail -3
