@@ -31,9 +31,7 @@ char* getOptionValue(char ** begin, char ** end, const std::string & option) {
 int main(int argc, char ** argv) {
 	logger log;
 	tradingbot t;
-			
-	log.log("Starting bot.");
-	
+
 	char *ticker = getOptionValue(argv, argv + argc, "--ticker");
 	if(ticker != NULL) {
 		t.ticker = std::string(ticker);
@@ -57,6 +55,7 @@ int main(int argc, char ** argv) {
 	char *db_file = getOptionValue(argv, argv + argc, "--db-file");
 	if(db_file != NULL) {
 		t.db_file = std::string(db_file);
+		logger::enable_date = false;
 	}
 
 	char *forceOption = getOption(argv, argv + argc, "--force");
@@ -77,5 +76,8 @@ int main(int argc, char ** argv) {
 	if(ticker != NULL) {
 		t.ticker = ticker;
 	}
+	
+	log.log("Starting bot.");
+	
 	t.trade();
 }

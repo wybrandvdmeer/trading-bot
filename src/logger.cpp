@@ -12,10 +12,14 @@ void logger::log(const char* fmt, ...) {
 	memset(buf, 0x00, 1000);
 	va_list args;
 
-	sprintf(buf, "%s", get_date().c_str());
+	int offset=0;
+	if(logger::enable_date) {
+		sprintf(buf, "%s", get_date().c_str());
+		offset = 20;
+	}
 
 	va_start(args, fmt);
-	vsprintf(buf + 20, fmt, args);
+	vsprintf(buf + offset, fmt, args);
 	va_end(args);
 
 	buf[strlen(buf)] = '\n';
