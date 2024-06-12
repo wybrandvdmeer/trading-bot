@@ -1,17 +1,17 @@
 #include "strategy.h"
-#include "dip_and_rip_strategy.h"
+#include "macd_root_strategy.h"
 #include "position.h"
 
 #define SEARCH_HISTORY 4
 
 using namespace std;
 
-dip_and_rip_strategy::dip_and_rip_strategy(db_api * db, indicators *ind) {
+macd_root_strategy::macd_root_strategy(db_api * db, indicators *ind) {
 	strategy::db = db;
 	strategy::ind = ind;
 }
 
-bool dip_and_rip_strategy::trade(std::string ticker, 
+bool macd_root_strategy::trade(std::string ticker, 
 	std::vector<candle*> *candles, 
 	candle *candle,
 	float max_delta_close_sma_200,
@@ -92,7 +92,7 @@ bool dip_and_rip_strategy::trade(std::string ticker,
 	return false;
 }
 
-bool dip_and_rip_strategy::low_detected(vector<candle *> *candles) {
+bool macd_root_strategy::low_detected(vector<candle *> *candles) {
 	if(candles->at(candles->size() - 1)->is_red(true)) {
 		return false;
 	}

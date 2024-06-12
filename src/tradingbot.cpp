@@ -57,8 +57,8 @@ void tradingbot::trade() {
 	if(strategy == "macd") {
 		strat = new macd_scavenging_strategy(&db, &ind);
 	} else
-	if(strategy == "dip") {
-		strat = new dip_and_rip_strategy(&db, &ind);
+	if(strategy == "macd_root") {
+		strat = new macd_root_strategy(&db, &ind);
 	} else 
 	if(strategy == "sma") {
 		strat = new sma_crossover_strategy(&db, &ind);

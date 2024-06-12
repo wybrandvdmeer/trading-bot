@@ -45,8 +45,8 @@ int main(int argc, char ** argv) {
 	char *strategy = getOptionValue(argv, argv + argc, "--strategy");
 	if(strategy != NULL) {
 		std:string s = std::string(strategy);
-		if(s != "macd" && s != "sma" && s != "dip") {
-			log.log("Strategy should be macd, dip or sma.");
+		if(s != "macd" && s != "sma" && s != "macd_root") {
+			log.log("Strategy should be macd, macd_root or sma.");
 			exit(1);
 		}
 		t.strategy = std::string(strategy);

@@ -2,12 +2,12 @@
 
 #include "strategy.h"
 
-#ifndef DIP_AND_RIP_STRATEGY
-#define DIP_AND_RIP_STRATEGY
+#ifndef MACD_ROOT_STRATEGY
+#define MACD_ROOT_STRATEGY
 
-class dip_and_rip_strategy : public strategy {
+class macd_root_strategy : public strategy {
 public:
-	dip_and_rip_strategy(db_api * db, indicators *ind);
+	macd_root_strategy(db_api * db, indicators *ind);
 	bool trade(std::string ticker, 
 		std::vector<candle*> * candles, 
 		candle * candle,
