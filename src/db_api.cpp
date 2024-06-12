@@ -19,7 +19,6 @@ using namespace std;
 
 db_api::db_api() {
 	debug = false;
-	read_only = false;
 	max_candle_time = 0L;
 }
 
@@ -35,11 +34,6 @@ int db_api::get_owner_of_db_file(std::string db_file) {
 	}
 
 	sqlite3_stmt * s = prepare(std::string(sql));
-	const char * error = sqlite3_errmsg(db);
-
-	if(error != NULL && strncmp("no such table", error, 13) == 0) {
-		return -1;	
-	}
 
 	sqlite3_step(s);
     
@@ -57,9 +51,7 @@ std::vector<position*> * db_api::get_closed_positions() {
 	char sql[1000];
 	std::vector<position*> *positions = new std::vector<position*>();
 
-	read_only=true;
-	open_db();
-	read_only=false;
+	open_db_ro();
 
 	sprintf(sql, "SELECT ticker, buy_time, sell_time, no_of_stocks, stock_price, sell_price \
 		FROM positions WHERE sell_time IS NOT NULL ORDER BY id");
@@ -88,9 +80,7 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 	char sql[1000];
 	std::vector<candle*> *candles = new std::vector<candle*>();
 
-	read_only=true;
-	open_db(db_file);
-	read_only=false;
+	open_db_ro(db_file);
 
 	sprintf(sql, "SELECT id, time, open, close, low, high, volume FROM candles ORDER BY time");
 	if(debug) {
@@ -412,10 +402,22 @@ void db_api::open_db() {
 }
 
 void db_api::open_db(std::string db_file) {
-	open_db(db_file, 0);
+	open_db(db_file, 0, false);
+}
+
+void db_api::open_db_ro() {
+	open_db(get_data_file(), 0, true);
+}
+
+void db_api::open_db_ro(std::string db_file) {
+	open_db(db_file, 0, true);
 }
 
 void db_api::open_db(std::string db_file, int timeout) {
+	open_db(db_file, timeout, false);
+}
+
+void db_api::open_db(std::string db_file, int timeout, bool read_only) {
 	int ret;
 	if(read_only) {
 		ret = sqlite3_open_v2(db_file.c_str(), &db, SQLITE_OPEN_READONLY , NULL);

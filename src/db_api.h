@@ -36,8 +36,11 @@ private:
 	long max_candle_time;
 	sqlite3 * db;
 	void open_db();
+	void open_db_ro();
+	void open_db_ro(std::string db_file);
 	void open_db(std::string db_file);
 	void open_db(std::string db_file, int timeout);
+	void open_db(std::string db_file, int timeout, bool read_only);
 	void execDml(std::string sql);
 	void execDml(std::string sql, bool ignore_error);
 	void close_db();
@@ -56,7 +59,6 @@ private:
 	void update_indicators(candle *c, float ** custom_ind);
 	int select_no_of_rows_of_table(std::string table);
 	logger log;
-	bool read_only;
 };
 
 #endif
