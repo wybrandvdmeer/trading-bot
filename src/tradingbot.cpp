@@ -163,6 +163,7 @@ void tradingbot::trade() {
 						log.log("\nQ of candles too low, ticker (%s) is blacklisted.", ticker.c_str());
 						tradingbot::black_listed_tickers.push_back(ticker);
 						tradingbot::ticker.erase();
+						has_lock = false;
 						sleep = 1;
 					}
 				} else if(!has_lock && !(has_lock = db.lock_db(tradingbot::id))) {
