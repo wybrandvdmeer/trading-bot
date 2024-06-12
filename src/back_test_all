@@ -1,5 +1,5 @@
 dir=$HOME/q
-strat=sma
+strat=macd
 
 rm -rf /db-files/*
 
