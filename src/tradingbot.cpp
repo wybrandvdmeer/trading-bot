@@ -248,7 +248,7 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 
 	finish(candles);
 
-	log.log("\n");
+	log.log("");
 }
 
 void tradingbot::finish(std::vector<candle*> * candles) {
