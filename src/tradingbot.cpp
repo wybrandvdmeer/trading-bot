@@ -398,6 +398,12 @@ std::unique_ptr<std::string> tradingbot::get_ticker_from_db() {
 		if(db_file.find(sysdate) == std::string::npos) {
 			continue;
 		}
+		if(db_file.find(tradingbot::strategy) == std::string::npos) {
+			continue;
+		}
+
+		log.log("Inspecting db-file: %s", db_file.c_str());
+
 		int id = db.get_owner_of_db_file(db_file);
 		if(id == -1) {
 			continue;
