@@ -14,6 +14,8 @@ public:
 		float max_delta_close_sma_200,
 		bool back_testing);
 private:
+	bool low_detected(std::vector<candle*> *candles);
+	bool wait_for_macd_crossing=false;
 };
 
 #endif

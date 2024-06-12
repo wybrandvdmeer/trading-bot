@@ -38,7 +38,6 @@ private:
 	bool get_quality_candles(std::vector<candle*> *candles);
 	void finish(std::vector<candle*> *candles);
 	std::string date_to_string(long ts);
-	std::string date_to_time_string(long ts);
 	void ema_test();
 	int find_position_of_last_day(std::vector<candle*> *candles);
 	std::unique_ptr<std::string> get_top_gainer(std::vector<std::string> black_listed_tickers);

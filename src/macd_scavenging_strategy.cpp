@@ -2,7 +2,6 @@
 #include "macd_scavenging_strategy.h"
 #include "position.h"
 
-#define SELL_NEGATIVE_TREND_LENGTH 5
 #define BUY_POSITIVE_TREND_LENGTH 2
 #define RELATIVE_HIST 0.3 // Results in getting only the first trade.
 
@@ -30,18 +29,16 @@ bool macd_scavenging_strategy::trade(std::string ticker,
 	position * p = db->get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(finished_for_the_day) {
-			log.log("sell: current candle is in closing window. Trading day is finished.");
-			bSell = true;
-		} else
 		if(strategy::ind->m.get_macd(0) <= strategy::ind->m.get_signal(0)) {
-			p->stop_loss_activated = 0;
 			log.log("sell: macd (%f) is below signal (%f)." ,
 				strategy::ind->m.get_macd(0) , strategy::ind->m.get_signal(0));
 			bSell = true;
 		} else
+		if(finished_for_the_day) {
+			log.log("sell: current candle is in closing window. Trading day is finished.");
+			bSell = true;
+		} else
 		if(close_0 >= p->sell_off_price) {
-			p->stop_loss_activated = 0;
 			log.log("sell: current price (%f) is above selling price (%f)." ,
 				close_0 , p->sell_off_price);
 			bSell = true;

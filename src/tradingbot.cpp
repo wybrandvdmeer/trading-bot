@@ -231,7 +231,7 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 		log.log("id: %d, (%ld -> %s) - open/close: (%.5f,%.5f), sma50: %.5f, sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
 			latest->id,
 			latest->time,
-			date_to_time_string(latest->time).c_str(),
+			latest->get_time_string().c_str(),
 			latest->open, 
 			latest->close,
 			ind.get_sma_50(0),
@@ -308,17 +308,6 @@ bool tradingbot::nse_is_open() {
 		return true;
 	}
 	return false;
-}
-
-std::string tradingbot::date_to_time_string(long ts) {
-	ts = ts - 4 * 3600;
-	struct tm *t = gmtime(&ts);
-	char buf[100];
-	sprintf(buf, "%02d:%02d:%02d", 
-		t->tm_hour, 
-		t->tm_min, 
-		t->tm_sec);
-	return std::string(buf);
 }
 
 int tradingbot::get_gmt_midnight() {

@@ -9,7 +9,7 @@ public:
 	long buy, sell;
 	int id, no_of_stocks;
 	float stock_price, sell_price, sell_off_price, loss_limit_price;
-	bool stop_loss_activated;
+	bool stop_loss_activated=false;
 };
 
 #endif
