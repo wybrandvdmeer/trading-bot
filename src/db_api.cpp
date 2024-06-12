@@ -5,6 +5,11 @@
 #include <cstring>
 #include <sqlite3.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "position.h"
 #include "candle.h"
 #include "db_api.h"
@@ -21,7 +26,7 @@ db_api::db_api() {
 int db_api::get_owner_of_db_file(std::string db_file) {
 	char sql[1000];
 
-	open(db_file, 5000); // timeout, because function looks in db-files of other bots (tbl-lock).
+	open_db(db_file, 5000); // timeout, because function looks in db-files of other bots (tbl-lock).
 
 	sprintf(sql, "SELECT value FROM config WHERE id = 'tb-id'");
 
@@ -37,9 +42,14 @@ int db_api::get_owner_of_db_file(std::string db_file) {
 	}
 
 	sqlite3_step(s);
+    
+	if(sqlite3_data_count(s) == 0) {
+        close_db(s);
+        return -1;
+    }
 
 	std::string id = selectString(s, 0);
-	close(s);
+	close_db(s);
 	return std::stoi(id);
 }
 
@@ -48,7 +58,7 @@ std::vector<position*> * db_api::get_closed_positions() {
 	std::vector<position*> *positions = new std::vector<position*>();
 
 	read_only=true;
-	open();
+	open_db();
 	read_only=false;
 
 	sprintf(sql, "SELECT ticker, buy_time, sell_time, no_of_stocks, stock_price, sell_price \
@@ -79,7 +89,7 @@ std::vector<candle*> * db_api::get_candles(std::string db_file) {
 	std::vector<candle*> *candles = new std::vector<candle*>();
 
 	read_only=true;
-	open(db_file);
+	open_db(db_file);
 	read_only=false;
 
 	sprintf(sql, "SELECT id, time, open, close, low, high, volume FROM candles ORDER BY time");
@@ -142,7 +152,7 @@ void db_api::update_indicators(candle *c, float ** custom_ind) {
 		return;
 	}
 
-	open();
+	open_db();
 	sprintf(sql, "UPDATE candles SET %s WHERE time = %ld", 
 		sql2,
 		c->time);
@@ -169,7 +179,7 @@ void db_api::insert_candle(std::string ticker, candle *c, float macd, float sign
 
 	int no_of_candles = select_no_of_rows_of_table("candles");
 
-	open();
+	open_db();
 	char sql[1000];
 	sprintf(sql, "INSERT INTO candles(id, ticker, time, open, close, low, high, volume, macd, signal,\
  		sma_50, sma_200) VALUES(%d, '%s', %ld, %.16f, %.16f, %.16f, %.16f, %ld, %f, %f, %f, %f)",
@@ -190,7 +200,7 @@ void db_api::insert_candle(std::string ticker, candle *c, float macd, float sign
 }
 
 void db_api::close_position(position p) {
-	open();
+	open_db();
 	char sql[1000];
 	sprintf(sql, "UPDATE positions SET sell_time = %ld, sell_price = %f, stop_loss_activated = %d\
 		WHERE id = %d", p.sell, p.sell_price, p.stop_loss_activated, p.id);
@@ -198,7 +208,7 @@ void db_api::close_position(position p) {
 }
 
 void db_api::update_candle(std::string ticker, candle c) {
-	open();
+	open_db();
 	char sql[1000];
 	sprintf(sql, "UPDATE candles SET open = %.16f, close = %.16f, low = %.16f, high = %.16f, \
 		volume = %ld WHERE time = %ld AND ticker = '%s'",
@@ -214,7 +224,7 @@ void db_api::update_candle(std::string ticker, candle c) {
 
 void db_api::open_position(position p) {
 	int no_of_positions = select_no_of_rows_of_table("positions");
-	open();
+	open_db();
 	char sql[1000];
 	sprintf(sql, 
 		"INSERT INTO POSITIONS(id, ticker, buy_time, no_of_stocks, stock_price, sell_off_price,\
@@ -231,7 +241,7 @@ void db_api::open_position(position p) {
 }
 
 float db_api::select_max_delta_close_sma_200() {
-    open();
+    open_db();
     char sql[1000];
 
     sprintf(sql, "SELECT MAX(close - sma_200) FROM candles WHERE sma_200 IS NOT NULL");
@@ -244,18 +254,18 @@ float db_api::select_max_delta_close_sma_200() {
     sqlite3_step(s);
 
     if(sqlite3_data_count(s) == 0) {
-        close(s);
+        close_db(s);
         return 0;
     }
 
     float max_sma_200 = selectFloat(s, 0);
 
-    close(s);
+    close_db(s);
     return max_sma_200;
 }
 
 int db_api::select_max_candle_time() {
-    open();
+    open_db();
     char sql[1000];
 
     sprintf(sql, "SELECT MAX(time) FROM candles");
@@ -268,18 +278,18 @@ int db_api::select_max_candle_time() {
     sqlite3_step(s);
 
     if(sqlite3_data_count(s) == 0) {
-        close(s);
+        close_db(s);
         return 0;
     }
 
     int max = selectInt(s, 0);
 
-    close(s);
+    close_db(s);
     return max;
 }
 
 int db_api::select_no_of_rows_of_table(std::string table) {
-    open();
+    open_db();
     char sql[1000];
 
     sprintf(sql, "SELECT COUNT(*) FROM %s", table.c_str());
@@ -292,18 +302,18 @@ int db_api::select_no_of_rows_of_table(std::string table) {
     sqlite3_step(s);
 
     if(sqlite3_data_count(s) == 0) {
-        close(s);
+        close_db(s);
         return 0;
     }
 
     int count = selectInt(s, 0);
 
-    close(s);
+    close_db(s);
     return count;
 }
 
 candle db_api::get_candle(std::string ticker, candle *c) {
-	open();
+	open_db();
 	char sql[1000];
 
 	sprintf(sql, "SELECT open, close, low, high, volume \
@@ -318,7 +328,7 @@ candle db_api::get_candle(std::string ticker, candle *c) {
     sqlite3_step(s);
 
 	if(sqlite3_data_count(s) == 0) {
-		close(s);
+		close_db(s);
 		candle cc;
 		return cc;
 	}
@@ -331,12 +341,12 @@ candle db_api::get_candle(std::string ticker, candle *c) {
 
 	candle cc(c->time, open, closeP, low, high, volume);
 
-	close(s);
+	close_db(s);
 	return cc;
 }
 
 position * db_api::get_open_position(std::string ticker) {
-	open();
+	open_db();
 	char sql[1000];
 	sprintf(sql, 
 	"SELECT id, buy_time, sell_time, no_of_stocks, stock_price, sell_off_price, loss_limit_price \
@@ -346,7 +356,7 @@ position * db_api::get_open_position(std::string ticker) {
 	sqlite3_step(s);
 
 	if(sqlite3_data_count(s) == 0) {
-		close(s);
+		close_db(s);
 		return NULL;
 	}
 
@@ -360,7 +370,7 @@ position * db_api::get_open_position(std::string ticker) {
 	p->sell_off_price = selectFloat(s, 5);
 	p->loss_limit_price = selectFloat(s, 6);
 
-	close(s);
+	close_db(s);
 
 	return p;
 }
@@ -380,7 +390,7 @@ void db_api::get_date(std::string &s) {
 }
 
 std::string db_api::get_data_file() {
-	return get_data_file(true);
+	return get_data_file(false);
 }
 
 std::string db_api::get_data_file(bool uri) {
@@ -394,17 +404,18 @@ std::string db_api::get_data_file(bool uri) {
 }
 
 void db_api::drop_db() {
-	std::remove(get_data_file(false).c_str());
+	std::remove(get_data_file().c_str());
 }
 
-void db_api::open() {
-	open(get_data_file());
+void db_api::open_db() {
+	open_db(get_data_file(true));
 }
 
-void db_api::open(std::string db_file) {
-	open(db_file, 0);
+void db_api::open_db(std::string db_file) {
+	open_db(db_file, 0);
 }
-void db_api::open(std::string db_file, int timeout) {
+
+void db_api::open_db(std::string db_file, int timeout) {
 	int ret;
 	if(read_only) {
 		ret = sqlite3_open_v2(db_file.c_str(), &db, SQLITE_OPEN_READONLY , NULL);
@@ -422,11 +433,11 @@ void db_api::open(std::string db_file, int timeout) {
 	}
 }
 
-void db_api::close() {
-	close(NULL);
+void db_api::close_db() {
+	close_db(NULL);
 }
 
-void db_api::close(sqlite3_stmt * statement) {
+void db_api::close_db(sqlite3_stmt * statement) {
 	if(statement != NULL) {
     	sqlite3_finalize(statement);
 	}
@@ -454,24 +465,24 @@ void db_api::execDml(std::string sql, bool ignore_error) {
     sqlite3_step(stmt);
 
 end:    
-	close(stmt);
+	close_db(stmt);
 }
 
 void db_api::create_schema(int id) {
-	open();
+	open_db();
 	execDml("CREATE TABLE config (id VARCHAR(50) PRIMARY KEY, value VARCHAR(50))", true);
-	open();
+	open_db();
 	execDml("CREATE TABLE positions (id INTEGER NOT NULL, ticker VARCHAR(10), buy_time INTEGER , \
 		sell_time INTEGER, no_of_stocks INTEGER, stock_price REAL, sell_price REAL, \
 		sell_off_price REAL, loss_limit_price REAL, stop_loss_activated INTEGER)", true);
-	open();
+	open_db();
 	execDml("CREATE TABLE candles (id INTEGER NOT NULL, ticker VARCHAR(10), time INTEGER, open REAL, \
 			close REAL, low REAL, high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL, \
 			sma_50 REAL, custom_ind1 REAL, custom_ind2 REAL, custom_ind3 REAL)", 
 			true);
-
-	open();
+	
 	char sql[1000];
+	open_db();
 	sprintf(sql, "INSERT INTO config VALUES('tb-id', %d)", id);
 	execDml(sql);
 }
@@ -486,6 +497,26 @@ sqlite3_stmt * db_api::prepare(std::string sql) {
 	}
 
 	return statement;
+}
+
+bool db_api::lock_db(int id) {
+	bool has_lock=false;
+	std::string db_file = get_data_file();
+
+	log.log("Try to lock db-file: %s.", db_file.c_str());
+
+	int fd = open(db_file.c_str(), O_CREAT | O_EXCL, 0644);
+	has_lock = (fd >= 0);
+	
+	log.log("Got lock is %d.", has_lock);
+
+	if(!has_lock) {	
+		close(fd);
+		return false;
+	}
+
+	create_schema(id);
+	return true;
 }
 
 std::string db_api::selectString(sqlite3_stmt * statement, int column) {

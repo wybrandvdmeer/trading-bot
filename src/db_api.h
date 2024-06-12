@@ -31,16 +31,17 @@ public:
 	float select_max_delta_close_sma_200();
 	int select_max_candle_time();
 	int get_owner_of_db_file(std::string db_file);
+	bool lock_db(int id);
 private:
 	long max_candle_time;
 	sqlite3 * db;
-	void open();
-	void open(std::string db_file);
-	void open(std::string db_file, int timeout);
+	void open_db();
+	void open_db(std::string db_file);
+	void open_db(std::string db_file, int timeout);
 	void execDml(std::string sql);
 	void execDml(std::string sql, bool ignore_error);
-	void close();
-	void close(sqlite3_stmt * statement);
+	void close_db();
+	void close_db(sqlite3_stmt * statement);
 	float selectFloat(sqlite3_stmt * statement, int column);
 	std::string selectString(sqlite3_stmt * statement, int column);
 	int selectInt(sqlite3_stmt * statement, int column);

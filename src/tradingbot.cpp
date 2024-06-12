@@ -5,11 +5,6 @@
 #include <memory>
 #include <filesystem>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "candle.h"
 #include "position.h"
 #include "yahoo_api.h"
@@ -20,8 +15,6 @@
 #include "tradingbot.h"
 
 using namespace std;
-
-#define LOCK_DIR "/tmp/tickers-"
 
 #define CANDLE_RANGE 	"2d"
 #define CANDLE_INTERVAL "1m"
@@ -55,7 +48,6 @@ tradingbot::tradingbot() {
 
 void tradingbot::trade() {
 	tradingbot::ticker = ticker;
-	bool schema_created = false;
 
 	if(debug) {
 		yahoo.debug = true;
@@ -89,7 +81,6 @@ void tradingbot::trade() {
 		ticker = base_name.substr(0, base_name.find("-"));
 		db.ticker = ticker;
 		db.drop_db();
-		has_lock = false;
 		db.create_schema(id);
 
 		std::vector<candle*> *candles = db.get_candles(db_file);
@@ -126,20 +117,24 @@ void tradingbot::trade() {
 		return;
 	}
 
-	std::unique_ptr<std::string> t = get_ticker_from_db();
-	if(t) {
-		ticker = *t;
-		remove_lock(ticker);
+	if(ticker.empty()) {
+		log.log("Check todays datafiles is one is locked by this bot.");
+		std::unique_ptr<std::string> ticker_in_progress = get_ticker_from_db();
+		if(ticker_in_progress) {
+			ticker = *ticker_in_progress;
+			has_lock = true;
+		}
 	}
 
 	while(true) {
 		if(!tradingbot::force && !nse_is_open()) {
-			if(!ticker.empty()) {
-				ticker.erase();
-			}
+			/* Reset all vars to begin a new day. 
+			*/
+			ticker.erase();
 			db.reset();
 			black_listed_tickers.clear();
 			strat->finished_for_the_day = false;
+			has_lock = false;
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(5 * 1000)); 
 			continue;
@@ -150,7 +145,6 @@ void tradingbot::trade() {
 			if(!u) { 
 				log.log("No top gainers.");
 			} else {
-				schema_created = false;
 				ticker = *u;
 			}
 		}
@@ -162,7 +156,7 @@ void tradingbot::trade() {
 			std::vector<candle*> * candles = yahoo.stockPrices(ticker, CANDLE_INTERVAL, CANDLE_RANGE);
 			if(candles != NULL) {
 				if(!get_quality_candles(candles)) {
-					if(schema_created && db.get_open_position(ticker) != NULL) {
+					if(has_lock && db.get_open_position(ticker) != NULL) {
 						log.log("\nQ of candles too low, but thrs an open position for ticker (%s).", 
 							ticker.c_str());
 					} else {
@@ -171,17 +165,12 @@ void tradingbot::trade() {
 						tradingbot::ticker.erase();
 						sleep = 1;
 					}
-				} else if(!lock(ticker)) {
-					log.log("Ticker (%s) is locked.", ticker.c_str());
+				} else if(!has_lock && !(has_lock = db.lock_db(tradingbot::id))) {
+					log.log("Ticker %s is locked.", ticker.c_str());
 					tradingbot::black_listed_tickers.push_back(ticker);
 					tradingbot::ticker.erase();
 					sleep = 1;
-				} else { 
-					if(!schema_created) {	
-						db.create_schema(tradingbot::id);
-						schema_created = true;
-					}
-
+				} else {
 					time_of_prv_candle = db.select_max_candle_time();
 					if(time_of_prv_candle == 0) {
 						time_of_prv_candle = get_gmt_midnight();
@@ -189,6 +178,8 @@ void tradingbot::trade() {
 
 					trade(candles);
 				}
+			} else {
+				log.log("No candles received.");
 			}
 		}
 
@@ -397,27 +388,6 @@ int tradingbot::find_position_of_last_day(std::vector<candle*> *candles) {
         idx++;
 	}
 	return day_break_position;
-}
-
-bool tradingbot::lock(std::string ticker) {
-	if(has_lock) {
-		return true;
-	}
-
-	std::string dir = LOCK_DIR + strategy + "-" + get_sysdate();
-	std::filesystem::create_directory(dir);
-	
-	int fd = open((dir + "/" + ticker).c_str(), O_CREAT | O_EXCL, 0644);
-	close(fd);
-	has_lock = (fd >= 0);
-	return has_lock;
-}
-
-void tradingbot::remove_lock(std::string ticker) {
-	std::string lock = LOCK_DIR + strategy + "-" + get_sysdate() + "/" + ticker;
-	log.log("Remove lock on ticker: %s", ticker.c_str());
-	std::remove(lock.c_str());
-	has_lock = false;
 }
 
 std::string tradingbot::get_sysdate() {
