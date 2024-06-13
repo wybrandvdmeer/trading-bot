@@ -57,7 +57,7 @@ void tradingbot::trade() {
 	if(strategy == "macd") {
 		strat = new macd_scavenging_strategy(&db, &ind);
 	} else
-	if(strategy == "root_mcd") {
+	if(strategy == "rmcd") {
 		strat = new macd_root_strategy(&db, &ind);
 	} else 
 	if(strategy == "sma") {
