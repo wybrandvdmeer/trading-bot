@@ -73,9 +73,6 @@ bool macd_root_strategy::trade(std::string ticker,
 	if(in_openings_window(candle->time)) { // for back-testing.
  		log.log("no trade: Candle is still in openings window."); 
 	} else
-	if(!ind->m.is_histogram_trending(SEARCH_HISTORY, 1, false)) {
- 		log.log("no trade: histogram is not negatively trending."); 
-	} else 
 	if(!low_detected(candles)) {
  		log.log("no trade: no low detected."); 
 	} else
