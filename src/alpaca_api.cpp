@@ -33,6 +33,12 @@ bool alpaca_api::open_position(position &p) {
 		return false; 
 	}
 
+	alpaca::Order order = response.second;
+	log.log("Order-id: %s", order.client_order_id.c_str());
+	log.log("Status order: %s", order.status.c_str());
+
+	p.alpaca_order_id = order.client_order_id;
+	p.alpaca_order_status = order.status;
 
 	return true;
 }

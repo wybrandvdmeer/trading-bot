@@ -210,14 +210,17 @@ void db_api::open_position(position p) {
 	char sql[1000];
 	sprintf(sql, 
 		"INSERT INTO POSITIONS(id, ticker, buy_time, no_of_stocks, stock_price, sell_off_price,\
-		loss_limit_price, stop_loss_activated) VALUES(%d, '%s', %ld, %d, %f, %f, %f, 0)", 
+		loss_limit_price, stop_loss_activated, alpaca_order_id, alpaca_order_status) \
+		VALUES(%d, '%s', %ld, %d, %f, %f, %f, 0, '%s', '%s')", 
 		no_of_positions + 1,
 		p.ticker.c_str(),
 		p.buy,
 		p.no_of_stocks,
 		p.stock_price, 
 		p.sell_off_price,
-		p.loss_limit_price);
+		p.loss_limit_price,
+		p.alpaca_order_id.c_str(), 
+		p.alpaca_order_status.c_str());
 
 	execDml(sql);
 }
@@ -436,7 +439,8 @@ void db_api::create_schema(int id) {
 	open_db();
 	execDml("CREATE TABLE positions (id INTEGER NOT NULL, ticker VARCHAR(10), buy_time INTEGER , \
 		sell_time INTEGER, no_of_stocks INTEGER, stock_price REAL, sell_price REAL, \
-		sell_off_price REAL, loss_limit_price REAL, stop_loss_activated INTEGER)", true);
+		sell_off_price REAL, loss_limit_price REAL, stop_loss_activated INTEGER, \
+		alpaca_order_id VARCHAR(100), alpaca_order_status VARCHAR(100))", true);
 	open_db();
 	execDml("CREATE TABLE candles (id INTEGER NOT NULL, ticker VARCHAR(10), time INTEGER, open REAL, \
 			close REAL, low REAL, high REAL, volume INTEGER, macd REAL, signal REAL, sma_200 REAL, \
@@ -502,7 +506,7 @@ void db_api::reset() {
 
 sqlite3_stmt * db_api::execute_select(std::string sql) {
     if(debug) {
-        log.log("%s", sql);
+        log.log("%s", sql.c_str());
     }
 
     sqlite3_stmt * s = prepare(std::string(sql));
