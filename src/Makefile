@@ -2,7 +2,7 @@ EXE=tb
 
 FLAGS = -std=c++20
 
-LIBS = -lcurl -lsqlite3 -lalpaca_client
+LIBS = -lcurl -lsqlite3 -lalpaca_client -lglog
 
 $(EXE): main.o download.o yahoo_api.o candle.o tradingbot.o db_api.o logger.o indicators.o macd.o \
 		top_gainers.o alpaca_api.o strategy.o macd_root_strategy.o \

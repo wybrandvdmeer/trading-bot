@@ -5,6 +5,8 @@
 #include <chrono>
 #include <ctime>
 
+#include "glog/logging.h"
+
 #include "logger.h"
 #include "tradingbot.h"
 
@@ -31,6 +33,8 @@ char* getOptionValue(char ** begin, char ** end, const std::string & option) {
 int main(int argc, char ** argv) {
 	logger log;
 	tradingbot t;
+
+	google::InitGoogleLogging("tradebot");
 
 	char *ticker = getOptionValue(argv, argv + argc, "--ticker");
 	if(ticker != NULL) {
