@@ -71,12 +71,14 @@ void tradingbot::trade() {
 		strat->disable_alpaca = true;
 	}
 
+	log.log("Alpaca key: %s.", std::getenv("APCA_API_KEY_ID"));
+
 	db.strategy = strategy;
 
 	/* Back-testing against a db file. 
 	*/
 	if(!db_file.empty()) {
-		strat->disable_alpaca = true;
+		strat->disable_alpaca = false;
 		std::string base_name = db_file.substr(db_file.find_last_of("/\\") + 1);
 		ticker = base_name.substr(0, base_name.find("-"));
 		db.ticker = ticker;
