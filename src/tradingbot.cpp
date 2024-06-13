@@ -44,6 +44,7 @@ tradingbot::tradingbot() {
 	tradingbot::macd_set_point = 0;
 	tradingbot::time_of_prv_candle = 0;
 	tradingbot::strategy = "macd";
+	tradingbot::disable_alpaca = false;
 }
 
 void tradingbot::trade() {
