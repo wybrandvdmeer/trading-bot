@@ -33,8 +33,8 @@ bool macd_root_strategy::trade(std::string ticker,
 	position * p = db->get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(wait_for_macd_crossing && candle->is_red()) {
-			log.log("sell: red candle while waiting for macd zero crossing.");
+		if(wait_for_macd_crossing && red_top(candles)) {
+			log.log("sell: red candles while waiting for macd zero crossing.");
 			bSell = true;
 		} else
 		if(!wait_for_macd_crossing && strategy::ind->m.get_macd(0) <= strategy::ind->m.get_signal(0)) {
@@ -87,6 +87,13 @@ bool macd_root_strategy::trade(std::string ticker,
 	}
 
 	return false;
+}
+
+bool macd_root_strategy::red_top(std::vector<candle*> *candles) {
+	return 
+		candles->size() >= 2 && 
+		candles->at(candles->size() - 1)->is_red(true) && 
+		candles->at(candles->size() - 2)->is_red(true);
 }
 
 bool macd_root_strategy::low_detected(vector<candle *> *candles) {

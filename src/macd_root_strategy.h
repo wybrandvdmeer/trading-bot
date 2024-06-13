@@ -15,6 +15,7 @@ public:
 		bool back_testing);
 private:
 	bool low_detected(std::vector<candle*> *candles);
+	bool red_top(std::vector<candle*> *candles);
 	bool wait_for_macd_crossing=false;
 };
 
