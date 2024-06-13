@@ -477,6 +477,8 @@ bool db_api::lock_db(int id) {
 		return false;
 	}
 
+	reset();
+
 	create_schema(id);
 	return true;
 }
