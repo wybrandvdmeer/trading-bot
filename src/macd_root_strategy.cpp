@@ -24,7 +24,7 @@ bool macd_root_strategy::trade(std::string ticker,
 	}
 
 	if(wait_for_macd_crossing && ind->m.get_histogram(0) > 0) {
-		log.log("Signal of candle (%s) crossed the macd line.", candle->get_time_string());
+		log.log("Signal of candle (%s) crossed the macd line.", candle->get_time_string().c_str());
 		wait_for_macd_crossing = false;
 	}
 
