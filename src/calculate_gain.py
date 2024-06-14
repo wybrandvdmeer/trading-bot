@@ -44,8 +44,6 @@ for f in db_files:
 
         ticker = rc[0]
 
-        print(ticker)
-
         ids = []
         buy_time = []
         sell_time = []
@@ -66,6 +64,9 @@ for f in db_files:
         p2['sell_price'] = sell_price
         p2['no_of_stocks'] = no_of_stocks
 
+        p2['g'] = p2['no_of_stocks'] * (p2['sell_price'] - p2['buy_price'])
+        print(ticker + ': ' + "{:.2f}".format(p2['g'].sum()))
+
         positions = pd.concat([positions, p2])
 
 positions['gain'] = positions['no_of_stocks'] * (positions['sell_price'] - positions['buy_price'])
@@ -73,4 +74,4 @@ gain = positions['gain'].sum()
 no_of_stocks = positions['no_of_stocks'].sum()
 no_of_trades = len(positions.index)
 
-print(date + ': gain: ' + str(gain) + ', no_of_stocks: ' + str(no_of_stocks) + ', no_of_trades: ' + str(no_of_trades))
+print('Total - gain: ' + "{:.2f}".format(gain) + ', no_of_stocks: ' + str(no_of_stocks) + ', no_of_trades: ' + str(no_of_trades))

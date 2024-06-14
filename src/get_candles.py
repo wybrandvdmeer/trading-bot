@@ -143,11 +143,11 @@ fplt.candlestick_ochl(stock_prices[['open', 'close', 'high', 'low']])
 fplt.plot(sma_50, ax=ax, legend='SMA-50')
 fplt.plot(sma_200, ax=ax, legend='SMA-200')
 if custom_ind1 != None:
-	fplt.plot(custom_ind1, ax=ax, legend='custom_ind1')
+    fplt.plot(custom_ind1, ax=ax, legend='custom_ind1')
 if custom_ind2 != None:
-	fplt.plot(custom_ind2, ax=ax, legend='custom_ind2')
+    fplt.plot(custom_ind2, ax=ax, legend='custom_ind2')
 if custom_ind3 != None:
-	fplt.plot(custom_ind3, ax=ax, legend='custom_ind3')
+    fplt.plot(custom_ind3, ax=ax, legend='custom_ind3')
 
 print(positions)
 
