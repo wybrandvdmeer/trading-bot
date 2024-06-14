@@ -4,6 +4,11 @@
 
 #define SEARCH_HISTORY 4
 
+/* strategie is erop gericht om in te haken op de low's, anticiperen dat
+de macd positief wordt en dan te traden totdat de macd weer negatief word.
+Strategie werkt alleen in een negatieve markt.
+*/
+
 using namespace std;
 
 macd_root_strategy::macd_root_strategy(db_api * db, indicators *ind) {
@@ -72,6 +77,9 @@ bool macd_root_strategy::trade(std::string ticker,
 	*/
 	if(in_openings_window(candle->time)) { // for back-testing.
  		log.log("no trade: Candle is still in openings window."); 
+	} else
+	if(close_0 >= ind->get_sma_200(0)) {
+ 		log.log("no trade: price >= sma_200."); 
 	} else
 	if(!low_detected(candles)) {
  		log.log("no trade: no low detected."); 
