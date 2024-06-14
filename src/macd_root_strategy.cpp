@@ -37,8 +37,8 @@ bool macd_root_strategy::trade(std::string ticker,
 			log.log("sell: red candles while waiting for macd zero crossing.");
 			bSell = true;
 		} else
-		if(ind->m.get_histogram(1) > 0 && ind->m.get_histogram(0) <= 0) {
-            log.log("sell: macd (%f) is below signal (%f)." ,
+		if(ind->m.get_histogram(1) > 0 && ind->m.is_histogram_trending(2, 0, false)) {
+            log.log("sell: histogram is trending negatively." ,
                 strategy::ind->m.get_macd(0) , strategy::ind->m.get_signal(0));
             bSell = true;
 		} else
