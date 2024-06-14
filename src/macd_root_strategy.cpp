@@ -28,21 +28,16 @@ bool macd_root_strategy::trade(std::string ticker,
 		return true;
 	}
 
-	if(wait_for_macd_crossing && ind->m.get_histogram(0) > 0) {
-		log.log("Signal of candle (%s) crossed the macd line.", candle->get_time_string().c_str());
-		wait_for_macd_crossing = false;
-	}
-
 	finished_for_the_day = candle_in_nse_closing_window(candle);
 	
 	position * p = db->get_open_position(ticker);
 	if(p != NULL) {
 		bool bSell = false;
-		if(wait_for_macd_crossing && red_top(candles)) {
+		if(ind->m.get_histogram(0) <= 0 && red_top(candles)) {
 			log.log("sell: red candles while waiting for macd zero crossing.");
 			bSell = true;
 		} else
-		if(!wait_for_macd_crossing && strategy::ind->m.get_macd(0) <= strategy::ind->m.get_signal(0)) {
+		if(ind->m.get_histogram(1) > 0 && ind->m.get_histogram(0) <= 0) {
             log.log("sell: macd (%f) is below signal (%f)." ,
                 strategy::ind->m.get_macd(0) , strategy::ind->m.get_signal(0));
             bSell = true;
@@ -67,7 +62,6 @@ bool macd_root_strategy::trade(std::string ticker,
 			p->sell = candle->time;
 			p->sell_price = close_0;
 			sell(p);
-			wait_for_macd_crossing = false;
 		}
 
 		return finished_for_the_day;
@@ -77,6 +71,9 @@ bool macd_root_strategy::trade(std::string ticker,
 	*/
 	if(close_0 <= ind->get_sma_200(0)) {
  		log.log("no trade: price <= sma_200."); 
+	} else
+	if(ind->m.get_histogram(0) >= 0) {
+ 		log.log("no trade: macd below signal."); 
 	} else
 	if(!low_detected(candles)) {
  		log.log("no trade: no low detected."); 
