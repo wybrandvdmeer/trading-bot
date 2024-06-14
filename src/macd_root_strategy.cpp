@@ -75,11 +75,11 @@ bool macd_root_strategy::trade(std::string ticker,
 
 	/* Buy logic. 
 	*/
-	if(close_0 <= ind->get_sma_200(0)) {
- 		log.log("no trade: price <= sma_200."); 
-	} else
 	if(!low_detected(candles)) {
  		log.log("no trade: no low detected."); 
+	} else
+	if(close_0 <= ind->get_sma_200(0)) {
+ 		log.log("no trade: price <= sma_200."); 
 	} else
 	if(in_openings_window(candle->time)) { // for back-testing.
  		log.log("no trade: Candle is still in openings window."); 
