@@ -22,23 +22,11 @@ candle::candle(
 }
 
 bool candle::is_green() {
-	return close > open;
-}
-
-bool candle::is_green(bool inclusive) {
-	return inclusive ? close >= open : close > open;
+	return close >= open;
 }
 
 bool candle::is_red() {
 	return close < open;
-}
-
-bool candle::is_red(bool inclusive) {
-	return inclusive ? close <= open : close < open;
-}
-
-bool candle::no_price_change() {
-	return open == close;
 }
 
 bool candle::equals(candle c) {

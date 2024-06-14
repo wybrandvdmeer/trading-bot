@@ -75,11 +75,11 @@ bool macd_root_strategy::trade(std::string ticker,
 
 	/* Buy logic. 
 	*/
-	if(!low_detected(candles)) {
- 		log.log("no trade: no low detected."); 
-	} else
 	if(close_0 <= ind->get_sma_200(0)) {
  		log.log("no trade: price <= sma_200."); 
+	} else
+	if(!low_detected(candles)) {
+ 		log.log("no trade: no low detected."); 
 	} else
 	if(in_openings_window(candle->time)) { // for back-testing.
  		log.log("no trade: Candle is still in openings window."); 
@@ -100,17 +100,17 @@ bool macd_root_strategy::trade(std::string ticker,
 bool macd_root_strategy::red_top(std::vector<candle*> *candles) {
 	return 
 		candles->size() >= 2 && 
-		candles->at(candles->size() - 1)->is_red(true) && 
-		candles->at(candles->size() - 2)->is_red(true);
+		candles->at(candles->size() - 1)->is_red() && 
+		candles->at(candles->size() - 2)->is_red();
 }
 
 bool macd_root_strategy::low_detected(vector<candle *> *candles) {
-	if(candles->at(candles->size() - 1)->is_red(true)) {
+	if(candles->at(candles->size() - 1)->is_red()) {
 		return false;
 	}
 
 	for(int idx=0; idx < SEARCH_HISTORY; idx++) {
-		if(candles->at(candles->size() - 2 - idx)->is_green(true)) {
+		if(candles->at(candles->size() - 2 - idx)->is_green()) {
 			return false;
 		}
 	}

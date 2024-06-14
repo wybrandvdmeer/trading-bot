@@ -13,10 +13,7 @@ public:
 	bool is_valid();
 	bool equals(candle c);
 	bool is_green();
-	bool is_green(bool inclusive);
 	bool is_red();
-	bool is_red(bool inclusive);
-	bool no_price_change();
 	std::string get_time_string();
 };
 
