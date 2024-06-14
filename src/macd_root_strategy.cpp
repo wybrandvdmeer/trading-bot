@@ -6,7 +6,7 @@
 
 /* strategie is erop gericht om in te haken op de low's, anticiperen dat
 de macd positief wordt en dan te traden totdat de macd weer negatief word.
-Strategie werkt alleen in een negatieve markt.
+close moet boven sma-200 zijn, om false low's zoveel mogelijk te vermijden.
 */
 
 using namespace std;
@@ -72,17 +72,17 @@ bool macd_root_strategy::trade(std::string ticker,
 
 		return finished_for_the_day;
 	}
-	
+
 	/* Buy logic. 
 	*/
-	if(in_openings_window(candle->time)) { // for back-testing.
- 		log.log("no trade: Candle is still in openings window."); 
-	} else
-	if(close_0 >= ind->get_sma_200(0)) {
- 		log.log("no trade: price >= sma_200."); 
+	if(close_0 <= ind->get_sma_200(0)) {
+ 		log.log("no trade: price <= sma_200."); 
 	} else
 	if(!low_detected(candles)) {
  		log.log("no trade: no low detected."); 
+	} else
+	if(in_openings_window(candle->time)) { // for back-testing.
+ 		log.log("no trade: Candle is still in openings window."); 
 	} else
 	if(!back_testing && time(0) - candle->time >= MAX_LAG_TIME) {
 		log.log("no trade: difference (%ld) candle time (%ld) vs current-time (%ld) is too great.",
