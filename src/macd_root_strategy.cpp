@@ -88,7 +88,6 @@ bool macd_root_strategy::trade(std::string ticker,
 			time(0));
 	} else {
 		buy(ticker, close_0, candle->time);
-		wait_for_macd_crossing = true;
 	}
 
 	return false;
