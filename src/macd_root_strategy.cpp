@@ -73,7 +73,7 @@ bool macd_root_strategy::trade(std::string ticker,
  		log.log("no trade: price <= sma_200."); 
 	} else
 	if(ind->m.get_histogram(0) >= 0) {
- 		log.log("no trade: macd below signal."); 
+ 		log.log("no trade: macd above signal."); 
 	} else
 	if(!low_detected(candles)) {
  		log.log("no trade: no low detected."); 
