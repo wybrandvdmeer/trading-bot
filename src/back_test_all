@@ -1,12 +1,13 @@
 dir=$HOME/q
-strat=macd
+strat=rmcd
+
+echo Strategy: $strat
 
 rm -rf /db-files/*
 
 ls $dir/*macd*.db | while read db
 do
-	echo Process db-file $db
-	./tb --db-file $db --strategy $strat | tail -3
+	./tb --db-file $db --strategy $strat 2>/dev/null 1>&2
 done
 
 calculate_gain --strategy $strat
