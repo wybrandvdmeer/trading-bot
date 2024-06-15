@@ -101,12 +101,12 @@ bool macd_root_strategy::red_top(std::vector<candle*> *candles) {
 }
 
 bool macd_root_strategy::low_detected(vector<candle *> *candles) {
-	if(candles->at(candles->size() - 1)->is_red()) {
+	if(!candles->at(candles->size() - 1)->is_green()) {
 		return false;
 	}
 
 	for(int idx=0; idx < SEARCH_HISTORY; idx++) {
-		if(candles->at(candles->size() - 2 - idx)->is_green()) {
+		if(!candles->at(candles->size() - 2 - idx)->is_red()) {
 			return false;
 		}
 	}
