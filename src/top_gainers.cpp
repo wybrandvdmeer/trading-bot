@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include <map>
+#include <regex>
 
 #include "top_gainers.h"
 #include "logger.h"
@@ -36,6 +37,7 @@ std::vector<std::string> * top_gainers::yget() {
 		price = -1;
 		if ((*it).rfind("href=\"/quote/", 0) == 0 && (*it).find('%') == std::string::npos) {
 			ticker = (*it).substr(13, (*it).length() - 13 - 1);
+			ticker = std::regex_replace(ticker, std::regex("[^A-Z]$"), "");
 		}
 
 		if (
