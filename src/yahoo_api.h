@@ -4,6 +4,7 @@
 #include "stock.h"
 #include "candle.h"
 #include "download.h"
+#include "logger.h"
 
 #ifndef YAHOO_API_H
 #define YAHOO_API_H
@@ -17,6 +18,7 @@ public:
 	bool debug;
 private:
 	std::string getModuleString();
+	logger log;
 };
 
 #endif

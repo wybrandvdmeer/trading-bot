@@ -74,7 +74,13 @@ std::vector<candle*>* yahoo_api::stockPrices(
 		return NULL;
 	}
 
-	auto json = nlohmann::json::parse(response);
+	nlohmann::json json;
+	try {
+		json = nlohmann::json::parse(response);
+	} catch(...) {
+		log.log("Exception occurred parsing response:");
+		cout << response.c_str();
+	}
 
 	std::vector<candle*> * candles = new std::vector<candle*>();
 	long ts;
