@@ -229,8 +229,6 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 	*/
 	candle * latest = candles->at(candles->size() - 1);
 
-	log.log("Ticker: %s, time latest candle: %s", 
-		ticker.c_str(), date_to_string(latest->time).c_str());
 	if(latest->time > time_of_prv_candle) {
 		log.log("id: %d, (%ld -> %s) - open/close: (%.5f,%.5f), sma50: %.5f, sma200: %.5f, sma200-close-delta: %.5f, macd: %.5f, signal: %.5f, histogram: %.5f", 
 			latest->id,
@@ -248,6 +246,9 @@ void tradingbot::trade(std::vector<candle*> *candles) {
 		strat->trade(ticker, candles, latest, max_delta_close_sma_200, !db_file.empty()); 
 
 		time_of_prv_candle = latest->time;
+	} else {
+		log.log("No trading cause latest candle lies in the past (%s).",
+			date_to_string(latest->time).c_str());
 	}
 
 	finish(candles);
